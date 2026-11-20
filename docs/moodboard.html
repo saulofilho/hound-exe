@@ -1,0 +1,395 @@
+<title>Hound.exe Moodboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Pixelify+Sans:wght@500;700&family=Silkscreen&family=VT323&display=swap">
+<style>
+  /* Layout: uma "área de trabalho" escura; cada seção é uma janela 1-bit; a cor só aparece onde o jogo usaria (pistas, bugs). */
+  :root {
+    --bg: #0b0b0d;
+    --panel: #121216;
+    --fg: #f3f3ee;
+    --muted: #8d8d96;
+    --line: #2b2b31;
+    --w1: #2fb5a8; /* área de trabalho: teal de papel de parede antigo */
+    --w2: #ffb000; /* memória: âmbar de monitor fósforo */
+    --w3: #ff6b3d; /* processador: laranja de calor */
+    --w4: #8f7bff; /* rede: violeta de LED de switch */
+    --w5: #ff3355; /* kernel: vermelho de alerta */
+    --display: "Pixelify Sans", "Silkscreen", monospace;
+    --ui: "Silkscreen", "Pixelify Sans", monospace;
+    --body: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    --crt: "VT323", "IBM Plex Mono", monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 56px; }
+  h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; line-height: 1.05; }
+  h2 { font-size: clamp(26px, 4vw, 38px); }
+  h3 { font-size: 20px; }
+  p { margin: 0; }
+  .label { font: 400 11px var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .muted { color: var(--muted); }
+  canvas { image-rendering: pixelated; display: block; max-width: 100%; }
+  :focus-visible { outline: 2px dashed var(--fg); outline-offset: 3px; }
+
+  /* janela */
+  .win { border: 2px solid var(--fg); background: var(--panel); box-shadow: 6px 6px 0 var(--fg); min-width: 0; }
+  .bar { background: var(--fg); color: var(--bg); font: 400 11px var(--ui); letter-spacing: .06em; padding: 5px 10px; display: flex; justify-content: space-between; gap: 10px; }
+  .bar span:last-child { letter-spacing: .3em; }
+  .pad { padding: 18px 20px; display: grid; gap: 12px; }
+  .sec { display: grid; gap: 20px; }
+  .sec-head { display: grid; gap: 8px; max-width: 68ch; }
+
+  /* hero */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 36px; align-items: center; }
+  .hero h1 { font-size: clamp(54px, 10vw, 112px); letter-spacing: -.01em; }
+  .hero h1 span { color: var(--w1); }
+  .tag { font: 500 clamp(20px, 2.6vw, 28px)/1.25 var(--display); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1px solid var(--line); padding: 4px 10px; font: 400 11px var(--ui); letter-spacing: .08em; text-transform: uppercase; }
+  .stage { background: #000; border-bottom: 2px solid var(--fg); }
+  .stage canvas { width: 100%; aspect-ratio: 16 / 9; }
+
+  /* grades */
+  .g4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+  .g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .g5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 900px) { .hero, .g3 { grid-template-columns: minmax(0, 1fr); } .g4, .g5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 460px) { .g4, .g5 { grid-template-columns: minmax(0, 1fr); } }
+
+  .pillar b { font: 700 22px var(--display); display: block; margin-bottom: 6px; }
+
+  /* sprites */
+  .sheet { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 700px) { .sheet { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .frame { border: 1px solid var(--line); background: #000; display: grid; gap: 6px; padding: 10px; justify-items: center; }
+  .frame canvas { width: 100%; max-width: 128px; aspect-ratio: 1; }
+
+  /* paleta */
+  .sw { display: grid; gap: 8px; }
+  .sw i { display: block; aspect-ratio: 4 / 3; border: 2px solid var(--fg); }
+  .sw code { font: 400 12px var(--body); color: var(--muted); }
+
+  /* mundos */
+  .world canvas { width: 100%; aspect-ratio: 16 / 9; background: #000; border-bottom: 2px solid var(--fg); }
+  .world .acc { width: 10px; height: 10px; display: inline-block; margin-right: 6px; vertical-align: 1px; }
+
+  /* bestiário */
+  .bug { text-align: center; }
+  .bug canvas { width: 72px; height: 72px; margin: 4px auto 8px; }
+
+  /* hud */
+  .hud { position: relative; background: #000; }
+  .hud canvas { width: 100%; aspect-ratio: 16 / 9; }
+  .hud-top { position: absolute; inset: 10px 10px auto 10px; display: flex; gap: 10px; flex-wrap: wrap; font: 400 12px var(--ui); }
+  .meter { background: #000; border: 2px solid var(--fg); padding: 3px 8px; display: flex; gap: 8px; align-items: center; }
+  .meter i { display: inline-block; width: 70px; height: 8px; border: 1px solid var(--fg); position: relative; }
+  .meter i::after { content: ""; position: absolute; inset: 1px auto 1px 1px; width: var(--v); background: var(--c, var(--fg)); }
+  .dialog { position: absolute; right: 10px; bottom: 10px; width: min(330px, 70%); background: var(--fg); color: var(--bg); border: 2px solid var(--fg); font-size: 13px; }
+  .dialog .bar { background: var(--bg); color: var(--fg); }
+  .dialog p { padding: 10px 12px; font: 400 18px/1.2 var(--crt); }
+  .dialog .btns { display: flex; gap: 8px; padding: 0 12px 12px; justify-content: flex-end; }
+  .dialog .btns span { border: 2px solid var(--bg); padding: 2px 10px; font: 400 11px var(--ui); }
+  @media (max-width: 600px) { .hud-top { font-size: 10px; } .meter i { width: 40px; } .dialog { position: static; width: auto; } }
+
+  /* tipografia */
+  .type-row { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: baseline; border-top: 1px solid var(--line); padding-top: 14px; }
+  @media (max-width: 600px) { .type-row { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
+  ul.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  ul.list li { border-bottom: 1px dotted var(--line); padding-bottom: 10px; }
+  ul.list li b { color: var(--fg); }
+  .do li::before { content: "+ "; color: var(--w1); }
+  .dont li::before { content: "× "; color: var(--w5); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<main class="wrap">
+
+  <!-- hero -->
+  <header class="hero">
+    <div style="display:grid;gap:18px;min-width:0">
+      <p class="label">moodboard · v0.2 · fase de planejamento</p>
+      <h1>HOUND<span>.EXE</span></h1>
+      <p class="tag">Um farejador armado solto dentro da máquina, caçando os bugs que a estão corrompendo.</p>
+      <div class="chips">
+        <span class="chip">metroidvania de ação</span><span class="chip">lateral + salas de cima</span><span class="chip">pixel 1-bit</span><span class="chip">uma cor por mundo</span><span class="chip">steam</span>
+      </div>
+    </div>
+    <div class="win">
+      <div class="bar"><span>C:\SETOR_01\AREA_DE_TRABALHO</span><span>_□×</span></div>
+      <div class="stage"><canvas id="hero" width="192" height="108" aria-label="O cão farejando um rastro até um bug na área de trabalho"></canvas></div>
+      <div class="pad"><p class="muted" style="font-size:13px">Cena-conceito na vista lateral: janelas viram plataformas, e o Debugger acerta uma race condition.</p></div>
+    </div>
+  </header>
+
+  <!-- pilares -->
+  <section class="sec">
+    <div class="sec-head"><p class="label">sensação</p><h2>Quatro palavras para tudo que entra no jogo</h2></div>
+    <div class="g4">
+      <div class="win pillar"><div class="bar"><span>faro.txt</span><span>×</span></div><div class="pad"><b>Faro</b><p class="muted">O mundo se revela pelo nariz. Rastros que somem, cheiros com timbre próprio.</p></div></div>
+      <div class="win pillar"><div class="bar"><span>debugger.exe</span><span>×</span></div><div class="pad"><b>Ação</b><p class="muted">Tiro curto, dash e impacto com peso. Rápido e arcade, com o faro como vantagem.</p></div></div>
+      <div class="win pillar"><div class="bar"><span>coleira.txt</span><span>×</span></div><div class="pad"><b>Coleira</b><p class="muted">O escopo é a regra da casa. O lado de fora sempre parece mais interessante.</p></div></div>
+      <div class="win pillar"><div class="bar"><span>maquina.txt</span><span>×</span></div><div class="pad"><b>Nostalgia</b><p class="muted">Um PC antigo com alma: ventoinha, ronco de HD, ícones esquecidos.</p></div></div>
+    </div>
+  </section>
+
+  <!-- cão -->
+  <section class="sec">
+    <div class="sec-head"><p class="label">personagem</p><h2>O cão: silhueta legível em 16 pixels</h2><p class="muted">O mesmo cão do scopehound. Ele não fala; tudo passa por postura, orelhas e rabo. O farejar é a animação mais importante do jogo.</p></div>
+    <div class="win"><div class="bar"><span>hound_sprites.bmp — 16×16 px</span><span>_□×</span></div>
+      <div class="pad">
+        <div class="sheet" id="sheet"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- paleta -->
+  <section class="sec">
+    <div class="sec-head"><p class="label">cor</p><h2>Preto e branco, mais uma cor por mundo</h2><p class="muted">A cor de destaque marca o que importa: rastros, bugs e o que dá para usar. Nunca é decoração. Cada mundo tem só uma.</p></div>
+    <div class="g5" id="palette"></div>
+  </section>
+
+  <!-- mundos -->
+  <section class="sec">
+    <div class="sec-head"><p class="label">ambientação</p><h2>Cinco mundos, cinco partes do computador</h2></div>
+    <div class="g3" id="worlds"></div>
+  </section>
+
+  <!-- bestiário -->
+  <section class="sec">
+    <div class="sec-head"><p class="label">bestiário</p><h2>Cada bug tem forma, cheiro e comportamento</h2><p class="muted">Bugs reais de software viram criaturas. O nome técnico vira a regra do inimigo.</p></div>
+    <div class="win"><div class="bar"><span>bugs.db</span><span>×</span></div><div class="pad"><div class="g5" id="bugs"></div></div></div>
+  </section>
+
+  <!-- hud -->
+  <section class="sec">
+    <div class="sec-head"><p class="label">interface</p><h2>HUD com cara de sistema operacional</h2><p class="muted">Medidores de faro, orçamento e escopo no topo. Pedidos e alertas chegam como caixas de diálogo do Windows 95, como no site do scopehound.</p></div>
+    <div class="win"><div class="bar"><span>hound.exe — setor 2-3 · memória</span><span>_□×</span></div>
+      <div class="hud">
+        <canvas id="hudscene" width="192" height="108" aria-label="Mockup da tela de jogo no mundo da memória"></canvas>
+        <div class="hud-top">
+          <span class="meter">FARO <i style="--v:62%;--c:var(--w2)"></i></span>
+          <span class="meter">ORÇAMENTO <i style="--v:40%"></i></span>
+          <span class="meter">ESCOPO ■■□</span>
+        </div>
+        <div class="dialog">
+          <div class="bar"><span>Aviso do sistema</span><span>×</span></div>
+          <p>O rastro continua em 0x7FFE, fora do escopo. Seguir mesmo assim?</p>
+          <div class="btns"><span>Seguir</span><span>Ficar</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- tipografia -->
+  <section class="sec">
+    <div class="sec-head"><p class="label">tipografia</p><h2>Letras de máquina antiga</h2></div>
+    <div class="win"><div class="bar"><span>fontes.ttf</span><span>×</span></div>
+      <div class="pad" style="gap:14px">
+        <div class="type-row"><span class="label">títulos</span><span style="font:700 40px/1 var(--display)">Pixelify Sans</span></div>
+        <div class="type-row"><span class="label">interface</span><span style="font:400 18px var(--ui);letter-spacing:.06em">SILKSCREEN · FARO 62%</span></div>
+        <div class="type-row"><span class="label">diálogos</span><span style="font:400 28px/1.1 var(--crt)">VT323 · "Arquivo encontrado na lixeira."</span></div>
+        <div class="type-row"><span class="label">logs e pistas</span><span style="font:400 15px var(--body)">IBM Plex Mono · at mem_alloc (heap.c:212)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- som e referências -->
+  <section class="g3">
+    <div class="win"><div class="bar"><span>som.wav</span><span>×</span></div><div class="pad">
+      <h3>Textura sonora</h3>
+      <ul class="list muted" style="font-size:14px">
+        <li><b>Música:</b> chiptune calmo, que fica tenso perto do bug.</li>
+        <li><b>Ambiente:</b> ventoinha, ronco de HD, estalo de CRT.</li>
+        <li><b>Faro:</b> fungada curta e um tom que sobe perto da pista.</li>
+        <li><b>Rede:</b> chiado de modem discado.</li>
+        <li><b>Kernel:</b> quase silêncio, com bipes de BIOS.</li>
+      </ul>
+    </div></div>
+    <div class="win"><div class="bar"><span>referencias.lnk</span><span>×</span></div><div class="pad">
+      <h3>Referências de sensação</h3>
+      <ul class="list muted" style="font-size:14px">
+        <li><b>Gato Roboto:</b> metroidvania 1-bit com um bicho pequeno como herói.</li>
+        <li><b>Not a Hero:</b> tiro lateral rápido, cobertura e impacto exagerado.</li>
+        <li><b>Serious Sam: Bogus Detour:</b> arenas de cima com tiro em dois analógicos.</li>
+        <li><b>Minit:</b> desafios curtos com cronômetro e o charme do 1-bit.</li>
+      </ul>
+      <p class="muted" style="font-size:12px">Referências de ritmo e sensação: personagem, mapa e visual são nossos.</p>
+    </div></div>
+    <div class="win"><div class="bar"><span>regras.ini</span><span>×</span></div><div class="pad">
+      <h3>Fazer e evitar</h3>
+      <ul class="list do muted" style="font-size:14px">
+        <li>Silhueta do cão sempre legível</li>
+        <li>Cor só no que é jogável</li>
+        <li>Humor de informática, sem jargão obrigatório</li>
+      </ul>
+      <ul class="list dont muted" style="font-size:14px">
+        <li>Matrix verde e "hacker de capuz"</li>
+        <li>Gradientes e brilho neon</li>
+        <li>Mais de uma cor de destaque por mundo</li>
+      </ul>
+    </div></div>
+  </section>
+
+  <footer class="muted" style="font-size:12px">Hound.exe · nome provisório · um jogo com o cão do scopehound · documento de planejamento</footer>
+</main>
+
+<script>
+(() => {
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const W = "#f3f3ee", K = "#000";
+
+  // ---- cão: retângulos numa grade 16×16 (x, y, w, h) ----
+  const DOG = {
+    body: [[2,7,9,4]], tail: [[0,6,2,1],[1,7,1,1]],
+    head: [[11,5,3,4],[14,6,2,2]], ear: [[11,4,2,1]], eye: [12,6],
+    legsA: [[3,11,1,3],[5,11,1,3],[8,11,1,3],[10,11,1,3]],
+    legsB: [[4,11,1,3],[5,11,1,2],[8,11,1,2],[9,11,1,3]],
+  };
+  function dog(ctx, ox, oy, pose = "idle", s = 1, t = 0) {
+    const r = (x, y, w, h, c = W) => { ctx.fillStyle = c; ctx.fillRect((ox + x) * s, (oy + y) * s, w * s, h * s); };
+    let hy = 0, hx = 0;
+    if (pose === "sniff") { hy = 3; hx = 0; }
+    if (pose === "dig") hy = 1;
+    DOG.body.forEach(b => r(...b));
+    const tailUp = pose === "happy" || (pose === "walk" && t % 2);
+    if (tailUp) { r(0,5,1,1); r(1,6,1,1); r(1,7,1,1); } else DOG.tail.forEach(b => r(...b));
+    DOG.head.forEach(([x,y,w,h]) => r(x + hx, y + hy, w, h));
+    if (pose !== "sniff") DOG.ear.forEach(([x,y,w,h]) => r(x, y + hy - (pose === "happy" ? 1 : 0), w, h + (pose === "happy" ? 1 : 0)));
+    else r(11, 7, 1, 2);
+    r(DOG.eye[0] + hx, DOG.eye[1] + hy, 1, 1, K);
+    const legs = pose === "walk" && t % 2 ? DOG.legsB : DOG.legsA;
+    if (pose === "dig") { r(3,11,1,3); r(5,11,1,3); r(9,10,2,1); r(10,11,1,3); }
+    else legs.forEach(b => r(...b));
+    if (pose === "bark") { r(14,8,2,1,K); r(14,8,1,1,K); [[0,0],[1,-1],[1,1]].forEach(([dx,dy]) => r(16+dx, 6+dy*2, 1, 1)); }
+    if (pose === "shoot") { r(13,9,2,1,K); r(14,9,1,1); r(16,7,1,1); r(17,6,2,1,css("--w1")); r(19,6,1,1,css("--w1")); }
+    if (pose === "shock") { [[1,2],[6,1],[13,1],[15,3]].forEach(([x,y]) => r(x, y, 1, 2)); }
+  }
+
+  // ---- sprites 8×8 em texto ----
+  const BUGS = [
+    ["Arquivo corrompido", "--w1", "Muda de ícone quando você não está olhando.", ["..####..",".#.##.#.","#.####.#","########",".#.##.#.","########","#.#..#.#","..#..#.."]],
+    ["Memory leak", "--w2", "Uma poça que cresce a cada segundo ignorado.", ["........","...##...","..####..",".######.","########","########",".##..##.","#......#"]],
+    ["Ponteiro nulo", "--w2", "Um buraco onde deveria haver chão.", ["..####..",".#....#.","#......#","#..##..#","#..##..#","#......#",".#....#.","..####.."]],
+    ["Race condition", "--w3", "Dois gêmeos: só pega quem chega junto.", [".##..##.","####.###","#.#..#.#","####.###","####.###","####.###","#.#..#.#","........"]],
+    ["Rootkit", "--w5", "Disfarça-se de processo legítimo.", ["#..##..#",".######.",".#.##.#.","########","###..###",".######.",".#.##.#.","#......#"]],
+  ];
+  function sprite(ctx, rows, ox, oy, s, c) {
+    ctx.fillStyle = c;
+    rows.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === "#") ctx.fillRect((ox + x) * s, (oy + y) * s, s, s); }));
+  }
+
+  // ---- folha de sprites ----
+  const poses = [["idle","parado"],["walk","andando"],["sniff","farejando"],["shoot","atirando"],["bark","latindo"],["happy","achou!"]];
+  const sheet = document.getElementById("sheet");
+  const anim = [];
+  poses.forEach(([p, label]) => {
+    const f = document.createElement("div"); f.className = "frame";
+    const c = document.createElement("canvas"); c.width = 20; c.height = 16;
+    c.setAttribute("aria-label", "Cão " + label);
+    const l = document.createElement("span"); l.className = "label"; l.textContent = label;
+    f.append(c, l); sheet.append(f); anim.push([c.getContext("2d"), p]);
+  });
+
+  // ---- paleta ----
+  const pal = [["Área de trabalho","--w1"],["Memória","--w2"],["Processador","--w3"],["Rede","--w4"],["Kernel","--w5"]];
+  const pe = document.getElementById("palette");
+  pal.forEach(([n, v], i) => {
+    pe.insertAdjacentHTML("beforeend", `<div class="sw"><i style="background:var(${v})"></i><span class="label">mundo ${i + 1}</span><b style="font:700 17px var(--display)">${n}</b><code>${css(v)}</code></div>`);
+  });
+
+  // ---- cenas dos mundos ----
+  const WORLDS = [
+    ["Área de trabalho", "--w1", "Pastas como salas, a lixeira como esconderijo, ícones esquecidos. É o mundo tutorial, acolhedor."],
+    ["Memória", "--w2", "Blocos que mudam de lugar e pilhas que sobem. O chão pode vazar a qualquer momento."],
+    ["Processador", "--w3", "Esteiras de instruções no ritmo do clock. Tudo acontece ao mesmo tempo."],
+    ["Rede", "--w4", "Pacotes viajando entre roteadores. O firewall é a borda do escopo."],
+    ["Kernel", "--w5", "O núcleo, escuro e silencioso. Nada é o que parece."],
+  ];
+  function scene(ctx, w, accent, t) {
+    ctx.fillStyle = K; ctx.fillRect(0, 0, 192, 108);
+    ctx.fillStyle = W;
+    if (w === 0) { // pastas
+      for (let y = 10; y < 100; y += 30) for (let x = 10; x < 190; x += 36) { ctx.fillRect(x, y, 16, 11); ctx.fillRect(x, y - 2, 7, 2); ctx.fillStyle = K; ctx.fillRect(x + 2, y + 3, 12, 6); ctx.fillStyle = W; }
+      ctx.fillRect(150, 70, 14, 18); ctx.fillStyle = K; ctx.fillRect(152, 74, 10, 12); ctx.fillStyle = W; for (let i = 0; i < 3; i++) ctx.fillRect(154 + i * 3, 75, 1, 10);
+    } else if (w === 1) { // blocos de memória
+      for (let y = 6; y < 104; y += 12) for (let x = 4; x < 190; x += 20) { if ((x * 7 + y * 3 + Math.floor(t / 20) * 13) % 5 === 0) continue; ctx.fillRect(x, y, 17, 9); ctx.fillStyle = K; ctx.fillRect(x + 1, y + 1, 15, 7); ctx.fillStyle = W; ctx.fillRect(x + 3, y + 4, 4, 1); }
+    } else if (w === 2) { // esteiras
+      for (let y = 14; y < 100; y += 22) { ctx.fillRect(0, y, 192, 1); ctx.fillRect(0, y + 8, 192, 1); for (let x = (t * (y % 3 + 1)) % 24 - 24; x < 192; x += 24) ctx.fillRect(x, y + 2, 8, 5); }
+    } else if (w === 3) { // rede
+      const nodes = [[30,20],[96,16],[160,28],[40,80],[110,70],[170,90]];
+      [[0,1],[1,2],[0,3],[1,4],[3,4],[4,5],[2,5]].forEach(([a,b]) => { const [x1,y1] = nodes[a], [x2,y2] = nodes[b]; for (let i = 0; i <= 40; i++) if (i % 3) ctx.fillRect(Math.round(x1 + (x2 - x1) * i / 40), Math.round(y1 + (y2 - y1) * i / 40), 1, 1); });
+      nodes.forEach(([x,y]) => { ctx.fillRect(x - 4, y - 4, 9, 9); ctx.fillStyle = K; ctx.fillRect(x - 2, y - 2, 5, 5); ctx.fillStyle = W; });
+      const k = (t % 60) / 60; const [x1,y1] = nodes[1], [x2,y2] = nodes[4]; ctx.fillStyle = accent; ctx.fillRect(x1 + (x2 - x1) * k - 2, y1 + (y2 - y1) * k - 2, 4, 4);
+      ctx.fillStyle = W; for (let y = 0; y < 108; y += 4) ctx.fillRect(186, y, 2, 2);
+    } else { // kernel
+      for (let r = 8; r < 70; r += 10) { for (let a = 0; a < 64; a++) { if ((a + r) % 4 === 0) continue; const ang = a / 64 * Math.PI * 2 + t / (r * 4); ctx.fillRect(96 + Math.round(Math.cos(ang) * r * 1.4), 54 + Math.round(Math.sin(ang) * r), 1, 1); } }
+      ctx.fillStyle = accent; ctx.fillRect(94, 52, 4, 4);
+    }
+  }
+  const wg = document.getElementById("worlds");
+  const worldCtx = [];
+  WORLDS.forEach(([n, v, d], i) => {
+    wg.insertAdjacentHTML("beforeend", `<article class="win world"><div class="bar"><span>mundo_${i + 1}.exe</span><span>×</span></div><canvas width="192" height="108" aria-label="Cena do mundo ${n}"></canvas><div class="pad"><h3><span class="acc" style="background:var(${v})"></span>${n}</h3><p class="muted" style="font-size:14px">${d}</p></div></article>`);
+    worldCtx.push(wg.lastElementChild.querySelector("canvas").getContext("2d"));
+  });
+  wg.insertAdjacentHTML("beforeend", `<article class="win"><div class="bar"><span>leia-me.txt</span><span>×</span></div><div class="pad"><h3>Regra de mundo</h3><p class="muted" style="font-size:14px">Cada mundo traz uma regra nova (o chão some, o tempo pulsa, os pacotes se movem), e não só fases maiores. A cor de destaque daquele mundo aparece apenas no que é jogável.</p><p class="label">≈ 6 fases por mundo · 30 no total</p></div></article>`);
+
+  // ---- bestiário ----
+  const bg = document.getElementById("bugs");
+  BUGS.forEach(([n, v, d, rows]) => {
+    bg.insertAdjacentHTML("beforeend", `<div class="bug"><canvas width="10" height="10" aria-label="${n}"></canvas><b style="font:700 16px var(--display)">${n}</b><p class="muted" style="font-size:13px;margin-top:4px">${d}</p></div>`);
+    sprite(bg.lastElementChild.querySelector("canvas").getContext("2d"), rows, 1, 1, 1, css(v));
+  });
+
+  // ---- hero e hud ----
+  const hero = document.getElementById("hero").getContext("2d");
+  const hud = document.getElementById("hudscene").getContext("2d");
+  const trail = [[40,80],[52,78],[64,74],[76,72],[90,70],[104,72],[118,76],[132,80],[144,82]];
+
+  function frame(t) {
+    const step = Math.floor(t / 12);
+    // hero: vista lateral, o cão atira num bug sobre plataformas de janelas
+    const acc = css("--w1");
+    hero.fillStyle = K; hero.fillRect(0, 0, 192, 108);
+    hero.fillStyle = W;
+    for (let x = 0; x < 192; x += 8) { hero.fillRect(x, 92, 7, 1); if ((x / 8) % 2) hero.fillRect(x + 2, 95, 3, 1); }
+    [[96, 64, 44], [146, 44, 40], [20, 40, 34]].forEach(([x, y, w]) => {
+      hero.fillRect(x, y, w, 4); hero.fillStyle = K; hero.fillRect(x + w - 6, y + 1, 1, 2); hero.fillRect(x + w - 3, y + 1, 1, 2); hero.fillStyle = W;
+      hero.fillRect(x, y + 4, 1, 3); hero.fillRect(x + w - 1, y + 4, 1, 3);
+    });
+    const cyc = t % 48, bx = 160, by = 70 + (step % 2);
+    sprite(hero, BUGS[3][3], bx, by, 1, cyc > 40 && cyc < 44 ? W : acc);
+    hero.fillStyle = acc;
+    if (cyc < 40) for (let k = 0; k < 3; k++) { const sx = 36 + ((cyc * 4 + k * 40) % 124); if (sx < bx) hero.fillRect(sx, 84, 3, 1); }
+    if (cyc > 38 && cyc < 44) { hero.fillStyle = W; [[-3,-3],[3,-3],[-3,3],[3,3],[0,-5],[0,5]].forEach(([dx,dy]) => hero.fillRect(bx + 4 + dx, by + 4 + dy, 1, 1)); }
+    dog(hero, 18, 78, cyc % 8 < 4 ? "shoot" : "walk", 1, step);
+
+    // folha de sprites
+    anim.forEach(([ctx, p]) => { ctx.fillStyle = K; ctx.fillRect(0, 0, 20, 16); dog(ctx, 1, 1, p, 1, step); });
+
+    // mundos
+    worldCtx.forEach((ctx, i) => {
+      scene(ctx, i, css(WORLDS[i][1]), t);
+      dog(ctx, 12 + (i * 37) % 60, 84, i % 2 ? "walk" : "sniff", 1, step);
+      if (i < 3) { const b = BUGS[[0, 1, 3][i]]; sprite(ctx, b[3], 150, 40 + i * 10, 1, css(b[1])); }
+    });
+
+    // hud: mundo da memória com poça de leak
+    scene(hud, 1, css("--w2"), t);
+    hud.fillStyle = css("--w2");
+    const leak = 8 + (step % 20);
+    for (let y = -leak; y <= leak; y += 2) for (let x = -leak * 2; x <= leak * 2; x += 2) if (x * x / 4 + y * y <= leak * leak && (x + y + step) % 4 === 0) hud.fillRect(130 + x, 70 + y / 2, 2, 1);
+    trail.slice(0, 6).forEach(([x, y], i) => hud.fillRect(x - 10, y - 4, 2, 2));
+    dog(hud, 14, 64, "sniff", 1, step);
+  }
+
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let t = 0;
+  frame(0);
+  if (!reduce) setInterval(() => { t++; frame(t); }, 1000 / 15);
+})();
+</script>
