@@ -23,6 +23,7 @@
     color-scheme: dark;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--body); }
   .wrap { max-width: 1120px; margin: 0 auto; padding-block: 40px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 56px; }
   h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; line-height: 1.05; }
@@ -386,6 +387,10 @@
     trail.slice(0, 6).forEach(([x, y], i) => hud.fillRect(x - 10, y - 4, 2, 2));
     dog(hud, 14, 64, "sniff", 1, step);
   }
+
+  // ?only=N mostra só a N-ésima seção (usado para gerar as imagens do README)
+  const only = new URLSearchParams(location.search).get("only");
+  if (only !== null) [...document.querySelector("main").children].forEach((el, i) => { el.hidden = String(i) !== only; });
 
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let t = 0;
