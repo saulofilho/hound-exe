@@ -18,8 +18,10 @@ buffer* e altura variável, dash (também no ar, uma vez), tiro em 3 direções 
 coice, dois bugs (um que anda e uma torreta que avisa antes de atirar), tremor
 de tela, *hitstop*, estilhaços e a "tela azul" ao morrer.
 
-**Próximas etapas:** faro (câmera lenta, parede falsa e ponto fraco) e a porta
-para a sala de cima (arena de 45 segundos).
+**Também já tem:** faro (Shift: câmera lenta, parede falsa, rastro e ponto
+fraco com tiro dobrado) e a porta para a sala de cima (45 segundos de ondas de
+bugs, mira com mouse ou analógico direito). Detalhes atualizados no
+[README em inglês](README.md).
 
 ### Como rodar
 

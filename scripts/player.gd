@@ -17,8 +17,12 @@ const DASH_TIME := 0.14
 const DASH_COOLDOWN := 0.45
 const FIRE_RATE := 0.13
 const IFRAMES := 0.8
+const SNIFF_DRAIN := 35.0     # energia por segundo real farejando
+const SNIFF_REGEN := 14.0
+const SNIFF_MIN := 15.0       # energia mínima para começar a farejar
 
 var hp := MAX_HP
+var sniff_energy := 100.0
 var facing := 1
 var _coyote := 0.0
 var _buffer := 0.0
@@ -78,6 +82,7 @@ func _physics_process(delta: float) -> void:
 			if not is_on_floor():
 				_air_dash = false
 
+	_update_sniff(delta)
 	if Input.is_action_pressed("shoot") and _fire_cd == 0.0:
 		_shoot()
 
@@ -93,11 +98,28 @@ func _shoot() -> void:
 		aim = Vector2(0, -1) if Input.get_axis("left", "right") == 0.0 else Vector2(facing, -1).normalized()
 	var b := Bullet.new()
 	b.setup(aim, true)
+	if get_parent().sniffing:
+		b.damage = 2  # o faro mostra o ponto fraco: tiro dobrado
 	b.global_position = global_position + Vector2(facing * 8, 1) + aim * 4
 	get_parent().add_child(b)
 	if aim.y == 0.0:
 		_recoil = -facing * 25.0  # um pequeno coice dá peso ao tiro
 	get_parent().add_shake(1.0)
+
+
+func _update_sniff(delta: float) -> void:
+	var stage := get_parent()
+	var real := delta / maxf(Engine.time_scale, 0.05)  # a energia corre em tempo real
+	var can := sniff_energy > (0.0 if stage.sniffing else SNIFF_MIN)
+	stage.set_sniffing(Input.is_action_pressed("sniff") and can and hp > 0)
+	if stage.sniffing:
+		sniff_energy = maxf(sniff_energy - SNIFF_DRAIN * real, 0.0)
+	else:
+		sniff_energy = minf(sniff_energy + SNIFF_REGEN * real, 100.0)
+
+
+func heal(amount: int) -> void:
+	hp = mini(hp + amount, MAX_HP)
 
 
 func _check_contact_damage() -> void:
@@ -129,11 +151,12 @@ func _draw() -> void:
 	var f := float(facing)
 	var flip := func(r: Rect2) -> Rect2:
 		return r if f > 0 else Rect2(Vector2(-r.position.x - r.size.x, r.position.y), r.size)
+	var hy := 3 if get_parent().sniffing else 0          # farejando: cabeça baixa
 	draw_rect(flip.call(Rect2(-6, -1, 10, 6)), c)        # corpo
-	draw_rect(flip.call(Rect2(3, -5, 5, 6)), c)          # cabeça
-	draw_rect(flip.call(Rect2(7, -3, 2, 3)), c)          # focinho
-	draw_rect(flip.call(Rect2(3, -7, 2, 2)), c)          # orelha
-	draw_rect(flip.call(Rect2(5, -3, 1, 1)), Color.BLACK)  # olho
+	draw_rect(flip.call(Rect2(3, -5 + hy, 5, 6)), c)     # cabeça
+	draw_rect(flip.call(Rect2(7, -3 + hy, 2, 3)), c)     # focinho
+	draw_rect(flip.call(Rect2(3, -7 + hy, 2, 2)), c)     # orelha
+	draw_rect(flip.call(Rect2(5, -3 + hy, 1, 1)), Color.BLACK)  # olho
 	draw_rect(flip.call(Rect2(-8, -2, 2, 1)), c)         # rabo
 	var step := int(Time.get_ticks_msec() / 120) % 2 if absf(velocity.x) > 10.0 and is_on_floor() else 0
 	for lx in [-5, -2, 1, 3]:

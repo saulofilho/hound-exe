@@ -5,6 +5,7 @@ extends Area2D
 var dir := Vector2.RIGHT
 var speed := 360.0
 var friendly := true
+var damage := 1
 var _life := 0.6
 
 
@@ -37,7 +38,7 @@ func _physics_process(delta: float) -> void:
 
 func _on_body(body: Node) -> void:
 	if friendly and body.is_in_group("enemy"):
-		body.hit(1, dir)
+		body.hit(damage, dir)
 	elif not friendly and body.is_in_group("player"):
 		body.take_damage(1, global_position)
 	_spark()

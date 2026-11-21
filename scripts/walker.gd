@@ -29,3 +29,4 @@ func _draw() -> void:
 	draw_line(Vector2(-6, -1), Vector2(6, 3), Color.BLACK)
 	for lx in [-5, 0, 4]:
 		draw_rect(Rect2(lx + legs, 5, 1, 3), c)    # patas
+	draw_weak_point(Vector2(-dir * 3, 1))

@@ -30,9 +30,16 @@ Feel references: *Gato Roboto*, *Not a Hero*, *Serious Sam: Bogus Detour* and
 
 Grey-box build from phase 0, captured from the game itself.
 
-| Shooting | Bugs and turret | Enemy down |
-|---|---|---|
-| ![The hound shooting along the corridor](docs/img/gameplay-shoot.png) | ![Walking bugs and a turret on a platform](docs/img/gameplay-jump.png) | ![A bug bursting into shards](docs/img/gameplay-turret.png) |
+| Shooting | Bugs and turret |
+|---|---|
+| ![The hound shooting along the corridor](docs/img/gameplay-shoot.png) | ![Walking bugs and a turret on a platform](docs/img/gameplay-jump.png) |
+| **Sniffing** | **Top-down room** |
+| ![Sniffing: time slows, the fake wall and the trail show up in teal, the turret's weak point blinks](docs/img/gameplay-sniff.png) | ![The top-down arena: bug waves close in while the timer runs](docs/img/gameplay-arena.png) |
+
+While **sniffing**, time slows to half speed, the fake wall that hides the
+exit shows up, a trail points to it, and the bugs' weak point blinks: shots
+deal double damage. The door behind the wall opens the **top-down room**:
+survive 45 seconds of bug waves.
 
 ## Moodboard
 
@@ -80,8 +87,8 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] Two bugs: a patroller and a turret that telegraphs its shots
 - [x] Game feel: screen shake, hitstop, hit flash, shards; "blue screen" on death
 - [x] Automated smoke test
-- [ ] Sniff: slow motion, fake wall, weak point
-- [ ] Door into a top-down arena (45 seconds, twin-stick)
+- [x] Sniff: slow motion, energy meter, fake wall, trail, weak point (double damage)
+- [x] Door into a top-down arena: 45 seconds of waves, twin-stick aiming
 - [ ] Playtest with 5 people and tune the numbers
 
 ## Running the prototype
@@ -102,12 +109,15 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 | Jump | Space or Z | A |
 | Shoot (hold) | J or X | X |
 | Dash | K or C | B |
+| Sniff (hold) | Shift or L | left trigger |
+| Aim in the top-down room | mouse | right stick |
 | Restart | R | Start |
 
 ### Tests and tools
 
 ```bash
-# plays the corridor on its own and checks jump, walk, shooting and dash
+# plays the corridor and the top-down room on its own (15 checks: movement,
+# shooting, sniff, fake wall, door, waves, timer and the win screen)
 godot --headless --path . -s tests/smoke.gd
 
 # regenerates the gameplay screenshots in docs/img/ (needs a window)
@@ -118,18 +128,24 @@ godot --path . -s tools/capture.gd
 
 ```
 project.godot     settings (384×216, integer scaling, crisp pixels)
-main.tscn         main scene
+main.tscn         side-view corridor
+arena.tscn        top-down room
 scripts/
-├── main.gd       builds the corridor from an ASCII map; camera, HUD, effects
-├── player.gd     the hound: movement, dash, shooting, damage
+├── stage.gd      shared base: controls, screen shake, hitstop, HUD, restart
+├── main.gd       corridor from an ASCII map; fake wall, health patch, door
+├── arena.gd      top-down room: bug waves and the 45-second timer
+├── player.gd     the hound (side view): movement, dash, shooting, sniff
+├── top_hound.gd  the hound (top-down): 8-way movement, twin-stick aim
 ├── bullet.gd     hound and bug projectiles
 ├── enemy.gd      bug base: health, hit flash, knockback, shards
 ├── walker.gd     patrolling bug
-└── turret.gd     shooting bug
+├── turret.gd     shooting bug
+└── chaser.gd     swarming bug (top-down room)
 tests/smoke.gd    automated smoke test
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images
 ```
 
 To change the corridor, edit `MAP` in `scripts/main.gd`:
-`#` wall · `P` hound · `w` walking bug · `t` turret · `E` exit.
+`#` wall · `F` fake wall · `P` hound · `w` walking bug · `t` turret ·
+`H` health patch · `D` door to the top-down room.

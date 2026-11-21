@@ -27,7 +27,7 @@ func hit(amount: int, dir: Vector2) -> void:
 	_flash = 0.08
 	_knock = dir * 60.0
 	var main := get_parent()
-	main.add_shake(2.0)
+	main.add_shake(3.0 if amount > 1 else 2.0)
 	if hp <= 0:
 		main.add_shake(5.0)
 		main.hitstop(0.05)
@@ -58,6 +58,13 @@ func tick(delta: float) -> void:
 	_flash = maxf(_flash - delta, 0.0)
 	_knock = _knock.move_toward(Vector2.ZERO, delta * 400.0)
 	queue_redraw()
+
+
+## Durante o faro, o ponto fraco pisca em branco (o tiro ali vale dobrado).
+func draw_weak_point(at: Vector2) -> void:
+	if get_parent().sniffing and int(Time.get_ticks_msec() / 80) % 2 == 0:
+		draw_rect(Rect2(at - Vector2(2, 2), Vector2(4, 4)), Color.WHITE)
+		draw_rect(Rect2(at - Vector2(1, 1), Vector2(2, 2)), Color.BLACK)
 
 
 func body_color() -> Color:

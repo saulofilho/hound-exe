@@ -35,3 +35,4 @@ func _draw() -> void:
 	draw_rect(Rect2(-7, -2, 14, 10), c)            # base
 	draw_rect(Rect2(-4, -7, 8, 5), c)              # cúpula
 	draw_rect(Rect2(-2, -5, 4, 2), Color.WHITE if warn else Color.BLACK)  # olho avisa o tiro
+	draw_weak_point(Vector2(0, 4))
