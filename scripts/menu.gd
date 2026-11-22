@@ -1,7 +1,6 @@
 class_name GameMenu
 extends VBoxContainer
 ## Lista de opções para teclado (setas/WS, Enter), controle e mouse.
-## Visual provisório, até o refinamento.
 
 const WIDTH := 220.0
 
@@ -33,6 +32,7 @@ static func _bind_key(action: String, key: Key) -> void:
 
 static func _bind_pad(action: String, button: JoyButton) -> void:
 	var ev := InputEventJoypadButton.new()
+	ev.device = -1
 	ev.button_index = button
 	if not InputMap.action_has_event(action, ev):
 		InputMap.action_add_event(action, ev)
@@ -66,22 +66,50 @@ func show_options(options: Array, focus := 0) -> void:
 		button.focus_entered.connect(Sound.play.bind("ui_move", 1.0, 0.0))
 
 
-## As duas linhas de volume e o VOLTAR, usadas no título e na pausa.
-func show_sound_options(back: Callable) -> void:
+## As opções, usadas no título e na pausa. `credits` só existe no título.
+func show_game_options(back: Callable, credits := Callable(), focus := 0) -> void:
 	var rows := []
-	for item in [["Music", "MÚSICA"], ["Effects", "EFEITOS"]]:
+	for item in [["Music", "opt_music"], ["Effects", "opt_effects"]]:
 		var bus: String = item[0]
 		var label: String = item[1]
 		var adjust := func(step: int) -> String:
 			Sound.change_volume(bus, step)
 			return _volume_text(bus, label)
 		rows.append([_volume_text(bus, label), null, adjust])
-	rows.append(["VOLTAR", back])
-	show_options(rows)
+
+	var language := func(_step: int) -> String:
+		Options.cycle_language()
+		# tudo muda de idioma: refaz a lista com o foco na mesma linha
+		show_game_options.call_deferred(back, credits, 2)
+		return _choice_text("opt_language", Options.t("language_name"))
+	rows.append([_choice_text("opt_language", Options.t("language_name")), null, language])
+
+	var screen := func(_step: int) -> String:
+		Options.toggle_fullscreen()
+		return _switch_text("opt_fullscreen", Options.fullscreen)
+	rows.append([_switch_text("opt_fullscreen", Options.fullscreen), null, screen])
+
+	var shake := func(_step: int) -> String:
+		Options.toggle_shake()
+		return _switch_text("opt_shake", Options.shake)
+	rows.append([_switch_text("opt_shake", Options.shake), null, shake])
+
+	if credits.is_valid():
+		rows.append([Options.t("menu_credits"), credits])
+	rows.append([Options.t("menu_back"), back])
+	show_options(rows, focus)
 
 
 static func _volume_text(bus: String, label: String) -> String:
-	return "<  %s %d%%  >" % [label, Sound.volumes[bus]]
+	return "<  %s %d%%  >" % [Options.t(label), Sound.volumes[bus]]
+
+
+static func _choice_text(label: String, value: String) -> String:
+	return "<  %s: %s  >" % [Options.t(label), value]
+
+
+static func _switch_text(label: String, value: bool) -> String:
+	return _choice_text(label, Options.t("on" if value else "off"))
 
 
 func _make_adjustable(button: Button, adjust: Callable) -> void:

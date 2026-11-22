@@ -1,3 +1,9 @@
 .godot/
 export/
+builds/
+steam/scripts/
+steam/output/
+*.p12
+*.p8
+__pycache__/
 .DS_Store

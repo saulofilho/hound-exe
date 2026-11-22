@@ -20,6 +20,7 @@ var visited := {}
 var taken := {}                 # itens e eventos que não voltam ("room:x:y", "arena_desktop")
 var arena_return := {}          # para onde a sala de cima devolve o cão
 var _quitting := false
+var pending_ending := false     # acabou de sair da sala do chefe vencido
 var boss_return := {}           # para onde a saída do chefe devolve o cão
 
 
@@ -52,6 +53,7 @@ func new_game() -> void:
 	taken = {}
 	arena_return = {}
 	boss_return = {}
+	pending_ending = false
 
 
 func save_game() -> void:
@@ -86,6 +88,7 @@ func load_game() -> bool:
 
 
 func to_title() -> void:
+	pending_ending = false
 	_change.call_deferred("res://title.tscn")
 
 

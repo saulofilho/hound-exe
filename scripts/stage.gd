@@ -29,6 +29,8 @@ func _ready() -> void:
 	pause_menu.stage = self
 	add_child(pause_menu)
 	Game.save_failed.connect(_on_save_failed)
+	Options.changed.connect(refresh_text)
+	Options.interrupted.connect(_on_interrupted)
 
 
 # ---- para as subclasses
@@ -49,8 +51,17 @@ func hero_dead() -> bool:
 	return false
 
 
+func refresh_text() -> void:
+	hud.hint = help_text()
+
+
+func _on_interrupted() -> void:
+	if not pause_menu.visible and not hero_dead():
+		pause_menu.open()
+
+
 func _on_save_failed() -> void:
-	show_toast("NÃO FOI POSSÍVEL SALVAR O PROGRESSO", 5.0)
+	show_toast(Options.t("save_failed"), 5.0)
 
 
 ## Parede sólida de `width` blocos a partir da célula (cx, cy).
@@ -119,7 +130,8 @@ func _process(delta: float) -> void:
 	toast.visible = _toast_t > 0.0
 	# o tremor ignora a câmera lenta, para não ficar "mole" durante o faro
 	_shake = move_toward(_shake, 0.0, delta / maxf(Engine.time_scale, 0.05) * 30.0)
-	camera.offset = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+	var jolt := Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+	camera.offset = jolt if Options.shake else Vector2.ZERO
 
 
 func _build_hud(help: String) -> void:
@@ -169,10 +181,12 @@ func _setup_input() -> void:
 			InputMap.action_add_event(action, ev)
 		if pad_buttons.has(action):
 			var jb := InputEventJoypadButton.new()
+			jb.device = -1  # qualquer controle, não só o primeiro
 			jb.button_index = pad_buttons[action]
 			InputMap.action_add_event(action, jb)
 		if pad_axes.has(action):
 			var jm := InputEventJoypadMotion.new()
+			jm.device = -1
 			jm.axis = pad_axes[action][0]
 			jm.axis_value = pad_axes[action][1]
 			InputMap.action_add_event(action, jm)

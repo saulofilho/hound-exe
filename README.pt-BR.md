@@ -31,15 +31,18 @@ pixel própria com acentos, tudo gerado por `tools/make_art.py`.
 
 O jogo abre na tela de título, salva sozinho e pausa com Esc (ou Start).
 Ao continuar, o cão volta ao último ponto de restauração.
-A música e os efeitos são originais (`tools/make_audio.py`); o volume fica em
-SOM, no título e na pausa.
+A música e os efeitos são originais (`tools/make_audio.py`); volume, idioma
+(português ou inglês), tela cheia e tremor ficam em OPÇÕES, no título e na pausa.
+
+**Fase 2 (Steam):** `tools/build.sh` exporta Windows, Linux e macOS. O que está
+pronto e o que falta para publicar está em [steam/PUBLICAR.md](steam/PUBLICAR.md).
 
 Depois de clonar, importe uma vez antes de rodar:
 `godot --headless --path . --import`.
 
 ### Como rodar
 
-1. Instale o Godot 4.3 ou mais novo: `brew install --cask godot`
+1. Instale o Godot 4.7.2: `brew install --cask godot`
 2. Abra o Godot, clique em **Importar** e escolha o `project.godot` desta pasta.
 3. Aperte **F5**.
 

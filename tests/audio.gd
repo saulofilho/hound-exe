@@ -58,7 +58,7 @@ func _heard(effect: String) -> void:
 
 
 func _clean() -> void:
-	for p in [PATH, PATH + ".bak", PATH + ".tmp", SETTINGS]:
+	for p in [PATH, PATH + ".bak", PATH + ".tmp", SETTINGS, "user://test_audio.options.json"]:
 		if FileAccess.file_exists(p):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(p))
 

@@ -34,7 +34,7 @@ func _ready() -> void:
 	hud.hp = hound.hp
 	hud.seconds_left = int(DURATION)
 	# um aviso que some: linha fixa embaixo taparia bugs e o cão
-	show_toast("WASD anda · mouse mira · clique ou J atira · K dash", 3.5)
+	show_toast(Options.t("hint_arena"), 3.5)
 
 
 func _build_level() -> void:
@@ -102,7 +102,7 @@ func stage_process(delta: float) -> void:
 			b._burst()
 			b.queue_free()
 		add_shake(6.0)
-		show_banner("PROCESSO CONCLUÍDO\n\nVoltando para a região...", ACCENT)
+		show_banner(Options.t("arena_won"), ACCENT)
 		Sound.music("")
 		Sound.play("victory")
 		Game.taken["arena_desktop"] = true

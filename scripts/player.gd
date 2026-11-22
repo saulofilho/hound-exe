@@ -200,7 +200,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	main.hitstop(0.06)
 	Sound.play("death" if hp <= 0 else "hurt")
 	if hp <= 0:
-		main.show_banner("TELA AZUL\n\nUm erro fatal ocorreu no hound.exe.\nR ou Start volta ao ponto de restauração.", Color("1c2fa8"))
+		main.show_banner(Options.t("death_side"), Color("1c2fa8"))
 		set_physics_process(false)
 		visible = false
 

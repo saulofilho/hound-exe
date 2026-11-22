@@ -3,12 +3,22 @@ extends SceneTree
 ## Rodar (precisa de janela): godot --path . -s tools/capture.gd
 
 const T := 16
+# `-- store`: só estas, em inglês, 1920x1080, em steam/screenshots/
+const STORE := [
+	"gameplay-shoot.png", "boss-copies.png", "gameplay-arena.png", "gameplay-sniff.png",
+	"gameplay-laser.png", "boss-stunned.png", "gameplay-chip.png", "boss-intro.png",
+]
 var G: Node  # autoload Game
+var store := false
 
 
 func _initialize() -> void:
 	G = root.get_node("Game")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://docs/img"))
+	store = "store" in OS.get_cmdline_user_args()
+	if store:
+		root.get_node("Options").language = "en"
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://steam/screenshots"))
 	_run()
 
 
@@ -21,8 +31,13 @@ func _shot(file: String) -> void:
 	await process_frame
 	RenderingServer.force_draw()  # desenha mesmo com a janela coberta
 	var img := root.get_texture().get_image()
-	img.resize(img.get_width() * 3, img.get_height() * 3, Image.INTERPOLATE_NEAREST)
-	img.save_png("res://docs/img/" + file)
+	var times := 5 if store else 3  # 5x = 1920x1080 exatos
+	img.resize(img.get_width() * times, img.get_height() * times, Image.INTERPOLATE_NEAREST)
+	if not store:
+		img.save_png("res://docs/img/" + file)
+	elif file in STORE:
+		img.convert(Image.FORMAT_RGB8)
+		img.save_png("res://steam/screenshots/%02d-%s" % [STORE.find(file) + 1, file])
 
 
 func _go(room: String, pos: Vector2) -> void:
@@ -32,7 +47,8 @@ func _go(room: String, pos: Vector2) -> void:
 
 func _run() -> void:
 	await physics_frame
-	await _menus()
+	if not store:
+		await _menus()
 	G.new_game()
 	for r in ["c_drive", "docs", "downloads", "trash"]:
 		G.visited[r] = true

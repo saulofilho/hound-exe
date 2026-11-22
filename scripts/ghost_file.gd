@@ -159,7 +159,7 @@ func hit(amount: int, _dir: Vector2) -> void:
 	elif second_phase() and not was_second:
 		main.add_shake(6.0)
 		Sound.play("ghost_phase")
-		main.show_toast("O arquivo criou cópias. Fareje o original.", 3.0)
+		main.show_toast(Options.t("boss_copies"), 3.0)
 
 
 # ------------------------------------------------------------------ desenho

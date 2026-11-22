@@ -98,7 +98,7 @@ func _child(step: String) -> void:
 
 
 func _clean() -> void:
-	for p in [PATH, PATH + ".bak", PATH + ".tmp", PATH.get_basename() + ".settings.json", MARK]:
+	for p in [PATH, PATH + ".bak", PATH + ".tmp", PATH.get_basename() + ".settings.json", PATH.get_basename() + ".options.json", MARK]:
 		if FileAccess.file_exists(p):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(p))
 

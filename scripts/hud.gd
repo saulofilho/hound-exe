@@ -31,8 +31,9 @@ func _draw() -> void:
 
 	var x := Art.taskbar(self)
 	var y := top + 3
-	Art.text(self, Vector2(x, y), "VIDA")
-	x += Art.text_width("VIDA") + 3
+	var life := Options.t("hud_life")
+	Art.text(self, Vector2(x, y), life)
+	x += Art.text_width(life) + 3
 	var critical := hp == 1 and Time.get_ticks_msec() / 200 % 2 == 0
 	for i in max_hp:
 		var cell := Rect2(x + i * 9, y + 2, 7, 8)
@@ -43,8 +44,9 @@ func _draw() -> void:
 	x += max_hp * 9 + 8
 
 	if energy >= 0.0:
-		Art.text(self, Vector2(x, y), "FARO")
-		x += Art.text_width("FARO") + 3
+		var sniff := Options.t("hud_sniff")
+		Art.text(self, Vector2(x, y), sniff)
+		x += Art.text_width(sniff) + 3
 		var blocks := ceili(energy / 10.0)
 		Art.border(self, Rect2(x, y + 1, 53, 10))
 		for i in blocks:
@@ -53,9 +55,9 @@ func _draw() -> void:
 			draw_rect(Rect2(x + 2 + i * 5, y + 3, 4, 6), Art.ACCENT if usable else Art.MID)
 		x += 60
 	if seconds_left >= 0:
-		Art.text(self, Vector2(x, y), "TEMPO %02d" % seconds_left, Art.ACCENT if seconds_left <= 10 else Art.WHITE)
+		Art.text(self, Vector2(x, y), Options.t("hud_time") % seconds_left, Art.ACCENT if seconds_left <= 10 else Art.WHITE)
 		x += 52
-		Art.text(self, Vector2(x, y), "BUGS %d" % bugs)
+		Art.text(self, Vector2(x, y), Options.t("hud_bugs") % bugs)
 
 	if place != "":
 		var width := Art.text_width(place) + 8
@@ -66,7 +68,7 @@ func _draw() -> void:
 		var box := Rect2(92, 4, 200, 15)
 		draw_rect(box, Art.BLACK)
 		Art.border(self, box)
-		Art.text(self, box.position + Vector2(4, 1), "~fantasma.tmp")
+		Art.text(self, box.position + Vector2(4, 1), Options.t("boss_file"))
 		var bar := Rect2(box.position + Vector2(80, 3), Vector2(116, 9))
 		Art.border(self, bar)
 		for i in ceili(boss_life * 28.0):

@@ -1,14 +1,17 @@
-; Hound.exe · fase 1 (Godot 4.3+)
+; Hound.exe (Godot 4.7.2)
 config_version=5
 
 [application]
-config/name="Hound.exe (protótipo)"
+config/name="Hound.exe"
+config/version="0.1.0"
+config/icon="res://art/icon.png"
 run/main_scene="res://title.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="HoundExe"
-config/features=PackedStringArray("4.3")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [display]
+window/size/mode.template=3
 window/size/viewport_width=384
 window/size/viewport_height=216
 window/size/window_width_override=1152
@@ -18,8 +21,12 @@ window/stretch/scale_mode="integer"
 
 [rendering]
 textures/canvas_textures/default_texture_filter=0
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
 
 [autoload]
 
 Game="*res://scripts/game.gd"
+Options="*res://scripts/options.gd"
 Sound="*res://scripts/sound.gd"

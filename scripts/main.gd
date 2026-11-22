@@ -35,7 +35,7 @@ func help_text() -> String:
 	# só a primeira sala ensina; nas outras a tela fica livre
 	if Game.room != Game.START_ROOM:
 		return ""
-	return "A/D anda · Espaço pula · J atira · Shift fareja · Tab mapa · Esc pausa"
+	return Options.t("hint_side")
 
 
 func _key(pos: Vector2) -> String:
@@ -115,18 +115,27 @@ func _build_level() -> void:
 
 func _ready() -> void:
 	super()
-	hud.place = "~fantasma.tmp" if Game.room == "ghost" else data.name
+	refresh_text()
 	hud.hp = player.hp
 	hud.energy = player.sniff_energy
 	if boss != null:
 		hud.boss_life = 1.0
 	hud.get_parent().add_child(_map_view)
 	if boss != null:
-		show_toast("ARQUIVO FANTASMA\nFareje para torná-lo sólido, ou espere ele bater.", 3.0)
+		show_toast(Options.t("boss_intro"), 3.0)
 	else:
-		show_toast(data.name)
+		show_toast(Options.t("room_" + Game.room))
 	Sound.music("boss" if boss != null else "desktop")
+	if Game.pending_ending:
+		Game.pending_ending = false
+		if Options.show_ending:
+			pause_menu.open_ending()
 	Game.save_game()  # depois dos avisos, para uma falha de gravação aparecer
+
+
+func refresh_text() -> void:
+	super()
+	hud.place = Options.t("boss_file" if Game.room == "ghost" else "room_" + Game.room)
 
 
 func hero_dead() -> bool:
@@ -230,7 +239,7 @@ func stage_process(_delta: float) -> void:
 			patches.erase(p)
 			Game.taken[_key(p)] = true
 			player.heal(1)
-			show_toast("+1 VIDA")
+			show_toast(Options.t("got_health"))
 			Sound.play("pickup")
 			Game.save_game()
 
@@ -241,7 +250,7 @@ func stage_process(_delta: float) -> void:
 			Game.abilities.dash = true
 			add_shake(4.0)
 			Sound.play("chip")
-			show_toast("DASH INSTALADO · K / C / B\natravessa lasers e tiros", 3.5)
+			show_toast(Options.t("got_dash"), 3.5)
 			Game.save_game()
 
 	if restore_pos != Vector2.ZERO and pp.distance_to(restore_pos) < 12.0 and player.hp > 0:
@@ -249,7 +258,7 @@ func stage_process(_delta: float) -> void:
 		player.hp = player.MAX_HP
 		Game.restore = {"room": Game.room, "pos": restore_pos}
 		if fresh:
-			show_toast("PONTO DE RESTAURAÇÃO CRIADO")
+			show_toast(Options.t("got_restore"))
 			Sound.play("restore")
 			Game.save_game()
 
@@ -257,7 +266,7 @@ func stage_process(_delta: float) -> void:
 		if Game.taken.has("boss_desktop"):
 			if not _door_told:
 				_door_told = true
-				show_toast("Região limpa.", 3.0)
+				show_toast(Options.t("region_clean"), 3.0)
 		elif Game.taken.has("arena_desktop"):
 			_leaving = true
 			Game.hp = player.hp
@@ -284,6 +293,7 @@ func stage_process(_delta: float) -> void:
 
 	if exit_pos != Vector2.ZERO and Game.taken.has("boss_desktop") and player.hp > 0 and pp.distance_to(exit_pos) < 10.0:
 		_leaving = true
+		Game.pending_ending = true
 		Sound.play("door")
 		Game.hp = player.hp
 		set_sniffing(false)
@@ -319,7 +329,7 @@ func _on_boss_defeated() -> void:
 		if c is Bullet and not c.friendly:
 			c.queue_free()
 	player.hp = player.MAX_HP
-	show_toast("ARQUIVO FANTASMA EXCLUÍDO\nregião limpa, saída aberta", 4.0)
+	show_toast(Options.t("boss_down"), 4.0)
 	Game.save_game()
 	queue_redraw()
 
@@ -363,7 +373,7 @@ class ExplorerView extends Control:
 	func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.85))
 		var box := Rect2(60, 32, 264, 140)
-		Art.window(self, box, "Explorer - " + Rooms.DATA[Game.room].name)
+		Art.window(self, box, Options.t("explorer_title") + Options.t("room_" + Game.room))
 		var origin := box.position + Vector2(26, 64)
 		var blink := Time.get_ticks_msec() / 300 % 2 == 0
 		var monitor := Art.texture("items")
@@ -379,4 +389,4 @@ class ExplorerView extends Control:
 			if Game.restore.get("room", "") == id:
 				Art.frame(self, monitor, 1, rect.position + Vector2(2, 2), Vector2(16, 16))
 		Art.frame(self, monitor, 1, box.position + Vector2(8, box.size.y - 21), Vector2(16, 16))
-		Art.text(self, box.position + Vector2(28, box.size.y - 18), "ponto de restauração · Tab fecha", Art.MID)
+		Art.text(self, box.position + Vector2(28, box.size.y - 18), Options.t("explorer_legend"), Art.MID)

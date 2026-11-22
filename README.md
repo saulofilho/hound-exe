@@ -130,9 +130,21 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] Sound effects and music (original chiptune, volume settings)
 - [x] Title screen, pause menu, save to disk
 
+### Phase 2 checklist (Steam page and demo)
+
+- [x] English and Brazilian Portuguese
+- [x] Any controller, with prompts that follow the input in use
+- [x] Options: volume, language, fullscreen, screen shake; credits and licenses
+- [x] An ending for the demo
+- [x] Windows, Linux and macOS export; SteamPipe scripts
+- [x] Store art, screenshots, gameplay trailer and store text
+- [ ] Run on real Windows, Linux, Steam Deck and a physical gamepad
+- [ ] macOS notarization
+- [ ] Steamworks account, store page review, demo review
+
 ## Running the prototype
 
-1. Install Godot 4.3 or newer (`brew install --cask godot` on macOS).
+1. Install Godot 4.7.2 (`brew install --cask godot` on macOS).
 2. Import the project once after cloning (the game will not start without
    this):
 
@@ -224,7 +236,7 @@ godot --headless --path . --import
   tension layer as bugs get close; the boss gains one in its second phase.
 - **Sniffing:** muffles the music and pings the nearest scent, faster and
   higher as you get closer. Each scent and each bug has its own timbre.
-- **Volume:** SOM in the title and pause menus, stored next to the save in
+- **Volume:** OPTIONS in the title and pause menus, stored next to the save in
   `save.settings.json`.
 
 ## Art
@@ -240,6 +252,22 @@ godot --headless --path . --import
 White, black and one accent per region (teal for the Desktop), used only on
 what is playable. The blue screen is the one deliberate exception. Scenery is
 drawn from the same ASCII maps as the collisions.
+
+## Builds and Steam
+
+```bash
+tools/build.sh          # Windows, Linux and macOS into builds/
+tools/make_trailer.sh   # gameplay trailer (macOS only)
+```
+
+Building needs the official Godot 4.7.2 export templates. Everything about
+publishing (requirements, what is still blocking, depots, Cloud, content and AI
+survey) is in [steam/PUBLICAR.md](steam/PUBLICAR.md) (Portuguese).
+
+```bash
+# Steam and Steam Deck criteria: languages, prompts, controllers, options, assets
+godot --headless --fixed-fps 60 --path . -s tests/steam.gd
+```
 
 ## Project layout
 
@@ -259,6 +287,8 @@ scripts/
 ├── room_art.gd   walls, window platforms and wallpaper from the map
 ├── hud.gd        taskbar HUD and boss bar
 ├── dialog_box.gd toasts and dialogs
+├── options.gd    autoload "Options": language, fullscreen, shake, active input
+├── texts.gd      every visible string, in Portuguese and English
 ├── rooms.gd      the Desktop region's rooms as ASCII maps, and how they link
 ├── stage.gd      shared base: controls, screen shake, hitstop, HUD, toasts
 ├── main.gd       room builder: exits, items, laser, restore point, door, Explorer
@@ -271,10 +301,12 @@ scripts/
 ├── walker.gd     patrolling bug
 ├── turret.gd     shooting bug
 └── chaser.gd     swarming bug (top-down room)
-tests/            smoke, route, arena, boss, save, audio and art tests
+tests/            smoke, route, arena, boss, save, audio, art and Steam tests
 audio/            generated WAV files
 art/              generated sprite sheets and font
 tools/make_art.py sprites and font, drawn as text
+tools/build.sh    exports every platform
+steam/            store assets, texts and publishing guide
 tools/make_audio.py  synthesizer and scores
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images
