@@ -83,4 +83,56 @@ func _run() -> void:
 		Input.action_press(dir)
 		await physics_frame
 	await _shot("gameplay-arena.png")
+	for action in ["shoot", "right", "down", "left", "up"]:
+		Input.action_release(action)
+	await _boss()
 	quit()
+
+
+func _boss() -> void:
+	G.hp = G.MAX_HP
+	G.visited["ghost"] = true
+	G.enter("ghost")
+	await _frames(40)
+	await _shot("boss-intro.png")
+
+	var s = current_scene
+	var b = s.boss
+	b.set_physics_process(false)
+	s.toast.text = ""
+	s.player.global_position = Vector2(120, 168)
+	s.player.facing = 1
+	b.hp = 22
+	b.state = 3  # AVISA
+	b.side = 1
+	b.lane = 168.0
+	b.position = Vector2(348, 168)
+	b._left = 0.5
+	b.queue_redraw()
+	await _frames(3)
+	await _shot("boss-copies.png")
+
+	Input.action_press("sniff")
+	await _frames(3)
+	b.queue_redraw()
+	await _frames(2)
+	await _shot("boss-sniff.png")
+	Input.action_release("sniff")
+	await _frames(4)
+
+	b.state = 5  # ATORDOADO
+	b._left = 2.0
+	b.position = Vector2(220, 162)
+	b.collision_layer = 4
+	b.queue_redraw()
+	Input.action_press("shoot")
+	await _frames(12)
+	b.queue_redraw()
+	await _shot("boss-stunned.png")
+	Input.action_release("shoot")
+
+	Input.action_press("map")
+	await _frames(2)
+	Input.action_release("map")
+	await _frames(5)
+	await _shot("gameplay-explorer.png")

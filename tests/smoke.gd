@@ -161,8 +161,11 @@ func _run() -> void:
 		s.player.global_position = s.door_pos
 		await _frames(8)
 		_check("porta não reabre a sala vencida", not _is_arena(current_scene))
+		_check("porta leva ao chefe", G.room == "ghost" and current_scene.boss != null)
+		if G.room == "ghost":
+			await _boss_flow()
 
-	_check("Explorer conhece as 4 salas", G.visited.size() == 4)
+	_check("Explorer conhece as 5 salas", G.visited.size() == 5)
 
 	for k in checks:
 		print("%-36s %s" % [k, "ok" if checks[k] else "FALHOU"])
@@ -175,3 +178,60 @@ func _is_arena(n: Node) -> bool:
 	# sem citar a classe Arena: ela usa o autoload Game, que ainda não existe
 	# quando este script é compilado
 	return n != null and n.name == "Arena"
+
+
+func _boss_flow() -> void:
+	var s = current_scene
+	var p = s.player
+	var b = s.boss
+	await _frames(100)  # fim da entrada do chefe
+	b.set_physics_process(false)  # parado, na altura do tiro, para medir o dano
+	b.global_position = Vector2(p.global_position.x + 70, 162)
+	b.collision_layer = 0
+	p.facing = 1
+	_p("shoot", true)
+	await _frames(3)
+	_p("shoot", false)
+	await _frames(30)
+	_check("tiro atravessa o fantasma", b.hp == 48)
+	b.set_physics_process(true)
+	_p("sniff", true)
+	await _frames(3)
+	b.set_physics_process(false)
+	b.global_position = Vector2(p.global_position.x + 70, 162)
+	_p("shoot", true)
+	await _frames(3)
+	_p("shoot", false)
+	await _frames(50)
+	_check("faro: acerta com dano dobrado", b.hp == 46)
+	_p("sniff", false)
+	await _frames(3)
+
+	p._iframes = 0.0
+	p.hp = 1
+	p.take_damage(1, p.global_position + Vector2(10, 0))
+	await _frames(10)
+	await _tap("restart")
+	await _frames(8)
+	_check("morrer no chefe volta à Lixeira", G.room == "trash" and not G.taken.has("boss_desktop"))
+
+	s = current_scene
+	s.player.global_position = s.door_pos
+	await _frames(8)
+	s = current_scene
+	_check("revanche com o chefe inteiro", G.room == "ghost" and s.boss.hp == 48)
+	s.player.global_position = s.exit_pos
+	await _frames(5)
+	_check("saída fechada até vencer", G.room == "ghost")
+	s.player.global_position = Vector2(40, 168)
+	await _frames(3)
+	s.boss.hit(999, Vector2.RIGHT)
+	await _frames(5)
+	_check("vitória registrada", G.taken.has("boss_desktop"))
+	s.player.global_position = s.exit_pos
+	await _frames(15)
+	_check("saída devolve à Lixeira", G.room == "trash")
+	s = current_scene
+	s.player.global_position = s.door_pos
+	await _frames(8)
+	_check("região limpa não repete o chefe", G.room == "trash")

@@ -1,6 +1,6 @@
 extends Stage
 ## Sala lateral da região: monta a sala atual (Game.room) a partir de Rooms.DATA
-## e cuida de saídas, itens, laser, ponto de restauração, porta e Explorer.
+## e cuida de saídas, itens, laser, ponto de restauração, porta, chefe e Explorer.
 
 const WALL := Color(0.36, 0.36, 0.4)
 const WALL_TOP := Color(0.62, 0.62, 0.66)
@@ -18,6 +18,9 @@ var lasers: Array[Vector2] = []
 var _leaving := false
 var _door_told := false
 var _map_view: Control
+var boss: GhostFile
+var exit_pos := Vector2.ZERO   # saída da sala do chefe, escondida até ele cair
+var _boss_bar: ColorRect
 
 
 func help_text() -> String:
@@ -35,6 +38,7 @@ func _build_level() -> void:
 	MAP = data.map
 	Game.visited[Game.room] = true
 	var start := Vector2.ZERO
+	var boss_at := Vector2.ZERO
 	for y in MAP.size():
 		var row: String = MAP[y]
 		var x := 0
@@ -53,6 +57,8 @@ func _build_level() -> void:
 				"F": fake_walls.append(at)
 				"R": restore_pos = at
 				"D": door_pos = at
+				"B": boss_at = at
+				"E": exit_pos = at
 				"L": _add_laser(at)
 				"H":
 					if not Game.taken.has(_key(at)):
@@ -70,6 +76,11 @@ func _build_level() -> void:
 	else:
 		player.position = start if start != Vector2.ZERO else restore_pos
 	add_child(player)
+	# o chefe procura o cão ao nascer, então entra depois dele
+	if boss_at != Vector2.ZERO and not Game.taken.has("boss_desktop"):
+		boss = GhostFile.new()
+		boss.defeated.connect(_on_boss_defeated)
+		_spawn(boss, boss_at)
 
 	camera.limit_left = 0
 	camera.limit_top = 0
@@ -86,8 +97,22 @@ func _build_level() -> void:
 
 func _ready() -> void:
 	super()
+	if boss != null:
+		var back := ColorRect.new()
+		back.color = WALL
+		back.position = Vector2(252, 9)
+		back.size = Vector2(124, 7)
+		hud.get_parent().add_child(back)
+		_boss_bar = ColorRect.new()
+		_boss_bar.color = Enemy.BUG_COLOR
+		_boss_bar.position = Vector2(2, 2)
+		_boss_bar.size = Vector2(120, 3)
+		back.add_child(_boss_bar)
 	hud.get_parent().add_child(_map_view)
-	show_toast(data.name)
+	if boss != null:
+		show_toast("ARQUIVO FANTASMA\nFareje para torná-lo sólido, ou espere ele bater.", 3.0)
+	else:
+		show_toast(data.name)
 
 
 func _spawn(e: Node2D, at: Vector2) -> void:
@@ -168,9 +193,13 @@ func _draw() -> void:
 		draw_rect(Rect2(restore_pos + Vector2(-3, 4), Vector2(6, 4)), Color.WHITE)
 
 	if door_pos != Vector2.ZERO:
-		var open: bool = not Game.taken.has("arena_desktop")
+		var open: bool = not Game.taken.has("boss_desktop")
 		draw_rect(Rect2(door_pos - Vector2(6, 8), Vector2(12, 16)), Color.WHITE, false, 1.0)
 		draw_rect(Rect2(door_pos - Vector2(2, 2), Vector2(4, 4)), Color.WHITE if open else ACCENT)
+
+	if exit_pos != Vector2.ZERO and Game.taken.has("boss_desktop"):
+		draw_rect(Rect2(exit_pos - Vector2(6, 8), Vector2(12, 16)), Color.WHITE, false, 1.0)
+		draw_rect(Rect2(exit_pos - Vector2(2, 2), Vector2(4, 4)), ACCENT)
 
 	if sniffing and is_instance_valid(player):
 		var targets := fake_walls + chips
@@ -228,10 +257,17 @@ func stage_process(_delta: float) -> void:
 			show_toast("PONTO DE RESTAURAÇÃO CRIADO")
 
 	if door_pos != Vector2.ZERO and pp.distance_to(door_pos) < 12.0 and player.hp > 0:
-		if Game.taken.has("arena_desktop"):
+		if Game.taken.has("boss_desktop"):
 			if not _door_told:
 				_door_told = true
-				show_toast("Processo limpo. O chefe da região vem na próxima etapa.", 3.0)
+				show_toast("Região limpa.", 3.0)
+		elif Game.taken.has("arena_desktop"):
+			_leaving = true
+			Game.hp = player.hp
+			set_sniffing(false)
+			Game.boss_return = {"room": Game.room, "pos": door_pos - Vector2(24, 0)}
+			Game.enter("ghost")
+			return
 		else:
 			_leaving = true
 			Game.hp = player.hp
@@ -241,8 +277,32 @@ func stage_process(_delta: float) -> void:
 	elif door_pos != Vector2.ZERO and pp.distance_to(door_pos) > 40.0:
 		_door_told = false
 
+	if _boss_bar != null:
+		var left := float(boss.hp) / GhostFile.MAX_HP_BOSS if is_instance_valid(boss) else 0.0
+		_boss_bar.size.x = 120.0 * left
+
+	if exit_pos != Vector2.ZERO and Game.taken.has("boss_desktop") and player.hp > 0 and pp.distance_to(exit_pos) < 10.0:
+		_leaving = true
+		Game.hp = player.hp
+		set_sniffing(false)
+		if Game.boss_return.is_empty():
+			Game.respawn()
+		else:
+			Game.enter(Game.boss_return.room, Game.boss_return.pos)
+		return
+
 	_check_exit(pp)
 	hud.text = "VIDA %d/%d   FARO %d%%" % [maxi(player.hp, 0), player.MAX_HP, int(player.sniff_energy)]
+
+
+func _on_boss_defeated() -> void:
+	Game.taken["boss_desktop"] = true
+	for c in get_children():
+		if c is Bullet and not c.friendly:
+			c.queue_free()
+	player.hp = player.MAX_HP
+	show_toast("ARQUIVO FANTASMA EXCLUÍDO\nregião limpa, saída aberta", 4.0)
+	queue_redraw()
 
 
 func _check_exit(pp: Vector2) -> void:
@@ -287,7 +347,7 @@ class ExplorerView extends Control:
 		draw_rect(box, Color.WHITE, false, 1.0)
 		draw_rect(Rect2(box.position, Vector2(box.size.x, 10)), Color.WHITE)
 		draw_string(ThemeDB.fallback_font, box.position + Vector2(4, 8), "EXPLORER · " + Rooms.DATA[Game.room].name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.BLACK)
-		var origin := box.position + Vector2(40, 66)
+		var origin := box.position + Vector2(14, 66)
 		var blink := Time.get_ticks_msec() / 300 % 2 == 0
 		for id in Rooms.DATA:
 			if not Game.visited.has(id):

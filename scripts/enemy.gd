@@ -6,6 +6,7 @@ const HIT_COLOR := Color.WHITE
 const BUG_COLOR := Color(1.0, 0.42, 0.24)  # cor de destaque provisória
 
 var hp := 3
+var contact_radius := 13.0    # 0 = não machuca ao encostar
 var _flash := 0.0
 var _knock := Vector2.ZERO
 

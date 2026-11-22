@@ -27,6 +27,7 @@ var facing := 1
 var _coyote := 0.0
 var _buffer := 0.0
 var _dash_t := 0.0
+var _dash_dir := 1
 var _dash_cd := 0.0
 var _fire_cd := 0.0
 var _iframes := 0.0
@@ -63,7 +64,15 @@ func _physics_process(delta: float) -> void:
 	if _dash_t > 0.0:
 		# durante o dash: linha reta, sem gravidade, invulnerável
 		_dash_t -= delta
-		velocity = Vector2(facing * DASH_SPEED, 0.0)
+		if _dash_t <= 0.0:
+			if _laser_in_path() and not is_on_wall():
+				# nunca termina dentro (ou colado) de um laser: segue até sair do outro lado
+				_dash_t = delta
+				_iframes = maxf(_iframes, delta * 2.0)
+			else:
+				_dash_t = 0.0
+		# ao terminar, perde o embalo, para não deslizar para dentro do perigo
+		velocity = Vector2(_dash_dir * (DASH_SPEED if _dash_t > 0.0 else RUN), 0.0)
 	else:
 		velocity.x = move_toward(velocity.x, dir * RUN, (ACCEL if dir != 0.0 else FRICTION) * delta) + _recoil
 		velocity.y = minf(velocity.y + GRAVITY * delta, MAX_FALL)
@@ -77,6 +86,7 @@ func _physics_process(delta: float) -> void:
 
 		if Input.is_action_just_pressed("dash") and Game.abilities.dash and _dash_cd == 0.0 and (is_on_floor() or _air_dash):
 			_dash_t = DASH_TIME
+			_dash_dir = facing
 			_dash_cd = DASH_COOLDOWN
 			_iframes = maxf(_iframes, DASH_TIME)
 			if not is_on_floor():
@@ -124,13 +134,21 @@ func heal(amount: int) -> void:
 	hp = mini(hp + amount, MAX_HP)
 
 
+func _laser_in_path() -> bool:
+	for l in get_parent().lasers:
+		var ahead: float = (l.x - global_position.x) * _dash_dir
+		if ahead > -15.0 and ahead < 21.0 and absf(global_position.y + 2.0 - l.y) < 14.0:
+			return true
+	return false
+
+
 func _check_contact_damage() -> void:
 	if _dash_t <= 0.0 and "lasers" in get_parent():
 		for l in get_parent().lasers:
 			if absf(global_position.x - l.x) < 14.0 and absf(global_position.y + 2.0 - l.y) < 14.0:
 				take_damage(1, l)
 	for e in get_tree().get_nodes_in_group("enemy"):
-		if global_position.distance_to(e.global_position) < 13.0:
+		if global_position.distance_to(e.global_position) < e.contact_radius:
 			take_damage(1, e.global_position)
 
 

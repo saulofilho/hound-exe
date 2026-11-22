@@ -13,6 +13,7 @@ var restore := {}               # {"room": String, "pos": Vector2}
 var visited := {}
 var taken := {}                 # itens e eventos que não voltam ("room:x:y", "arena_desktop")
 var arena_return := {}          # para onde a sala de cima devolve o cão
+var boss_return := {}           # para onde a saída do chefe devolve o cão
 
 
 func new_game() -> void:
@@ -23,6 +24,8 @@ func new_game() -> void:
 	restore = {}
 	visited = {}
 	taken = {}
+	arena_return = {}
+	boss_return = {}
 
 
 ## Troca de sala (ou de cena) no fim do quadro, para não quebrar a física.

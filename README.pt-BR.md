@@ -23,6 +23,9 @@ fraco com tiro dobrado) e a porta para a sala de cima (45 segundos de ondas de
 bugs, mira com mouse ou analógico direito). Detalhes atualizados no
 [README em inglês](README.md).
 
+**Fase 1 em andamento:** a região Área de trabalho já tem salas ligadas, chip
+de dash e o chefe, o Arquivo Fantasma. A arte ainda é provisória.
+
 ### Como rodar
 
 1. Instale o Godot 4.3 ou mais novo: `brew install --cask godot`

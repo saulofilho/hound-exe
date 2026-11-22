@@ -38,13 +38,27 @@ Grey-box build, captured from the game itself.
 | **Explorer (Tab)** | **Top-down room** |
 | ![The Explorer map with the four visited rooms](docs/img/gameplay-explorer.png) | ![The top-down arena: bug waves close in while the timer runs](docs/img/gameplay-arena.png) |
 
-The Desktop region has four connected rooms. The hound starts **without the
+The Desktop region has four connected rooms and a boss room. The hound starts **without the
 dash**; a laser in Documentos blocks the way to Lixeira, and the dash chip
 waits at the end of the Downloads branch. **Sniffing** slows time, reveals the
 fake wall that hides Lixeira's exit and makes shots deal double damage. A
 **restore point** saves progress; dying sends you back to it. The door behind
 the fake wall opens the **top-down room**: survive 45 seconds and you return to
-the region.
+the region, where the same door now leads to the boss.
+
+### Boss: o Arquivo Fantasma (the Ghost File)
+
+| Hidden: shots pass through | Second phase: copies |
+|---|---|
+| ![The translucent ghost file floating over the arena](docs/img/boss-intro.png) | ![Three identical files, each with a warning line](docs/img/boss-copies.png) |
+| **Sniffing shows the original** | **Stunned: open fire** |
+| ![Only the real file and its line remain](docs/img/boss-sniff.png) | ![The file on the floor with X eyes](docs/img/boss-stunned.png) |
+
+It floats and fires, then locks onto the hound's height, shows the line and
+charges: jump it or dash through it. Hitting the wall stuns it, and that is the
+window to shoot. Sniffing makes it solid at any time (double damage). At half
+health it speeds up, fires in a spread and projects copies that only sniffing
+clears. Dying sends you to the restore point and the boss recovers.
 
 ## Moodboard
 
@@ -104,7 +118,8 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] Restore points; death returns you to the last one
 - [x] Explorer map (Tab) of visited rooms
 - [x] Top-down room returns to the region once cleared
-- [ ] Region boss: *o Arquivo Fantasma*
+- [x] Region boss: *o Arquivo Fantasma* (placeholder art)
+- [ ] Windows 95 HUD and pixel fonts
 - [ ] Final 1-bit sprites and tiles
 - [ ] Sound effects and music
 - [ ] Title screen, pause menu, save to disk
@@ -135,9 +150,17 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 ### Tests and tools
 
 ```bash
-# plays the whole region on its own (20 checks: movement, room exits, laser,
-# dash chip, restore point, sniff, death and respawn, top-down room and return)
+# rules and state, jumping between points by teleport (29 checks)
 godot --headless --path . -s tests/smoke.gd
+
+# start to top-down room door with inputs only (bugs removed), plus laser distances
+godot --headless --path . -s tests/route.gd
+
+# the full 45 seconds of the top-down room, inputs only, 10 seeds
+godot --headless --fixed-fps 60 --path . -s tests/arena.gd
+
+# boss fights, inputs only: 5 strategies, 6 start timings
+godot --headless --fixed-fps 60 --path . -s tests/boss.gd
 
 # regenerates the gameplay screenshots in docs/img/ (needs a window)
 godot --path . -s tools/capture.gd
@@ -158,17 +181,18 @@ scripts/
 ├── player.gd     the hound (side view): movement, dash, shooting, sniff
 ├── top_hound.gd  the hound (top-down): 8-way movement, twin-stick aim
 ├── bullet.gd     hound and bug projectiles
+├── ghost_file.gd the region boss: states, charge, copies
 ├── enemy.gd      bug base: health, hit flash, knockback, shards
 ├── walker.gd     patrolling bug
 ├── turret.gd     shooting bug
 └── chaser.gd     swarming bug (top-down room)
-tests/smoke.gd    automated smoke test
+tests/            smoke, route, arena and boss tests
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images
 ```
 
 To change the rooms, edit `scripts/rooms.gd`. Map legend:
 `#` wall · `F` fake wall · `L` laser · `P` start · `R` restore point ·
-`A` dash chip · `H` health patch · `D` door to the top-down room ·
+`A` dash chip · `B` boss · `E` exit that opens once the boss falls · `H` health patch · `D` door to the top-down room ·
 `w` walking bug · `t` turret. Each room's `links` say where every edge opening
 leads; the rows line up between rooms.

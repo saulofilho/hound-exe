@@ -2,7 +2,7 @@ class_name Rooms
 ## Salas da região Área de trabalho, em mapas ASCII.
 ## Legenda: # parede · F parede falsa · L laser (só passa no dash) · P início
 ##          R ponto de restauração · A chip de dash · H patch de vida · D porta da sala de cima
-##          w bug que anda · t torreta
+##          w bug que anda · t torreta · B chefe · E saída que abre ao vencer o chefe
 ## Saídas: aberturas na borda; `links` diz para qual sala cada uma leva (as linhas se alinham).
 
 const DATA := {
@@ -94,6 +94,26 @@ const DATA := {
 			"...R..........w.........####..w........t...FH.D#",
 			"################################################",
 			"################################################",
+		],
+	},
+	"ghost": {
+		"name": "C:\\Lixeira\\~fantasma.tmp",
+		"grid": Vector2i(5, 0),
+		"links": [],
+		"map": [
+			"########################",
+			"#......................#",
+			"#......................#",
+			"#......................#",
+			"#......................#",
+			"#................B.....#",
+			"#......................#",
+			"#........######........#",
+			"#......................#",
+			"#...###..........###...#",
+			"#.P.........E..........#",
+			"########################",
+			"########################",
 		],
 	},
 }
