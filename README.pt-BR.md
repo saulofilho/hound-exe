@@ -10,7 +10,7 @@ Metroidvania de ação em pixel art 1-bit com o cão do
 
 ## Protótipo da fase 0
 
-Arte cinza, sem som. Serve para testar se correr, pular e atirar com o cão é
+A fase 0 começou com arte cinza, para testar se correr, pular e atirar com o cão é
 gostoso (GDD, seção 11).
 
 **O que já tem:** corredor lateral de 3 telas, pulo com *coyote time*, *jump
@@ -24,7 +24,10 @@ bugs, mira com mouse ou analógico direito). Detalhes atualizados no
 [README em inglês](README.md).
 
 **Fase 1 em andamento:** a região Área de trabalho já tem salas ligadas, chip
-de dash e o chefe, o Arquivo Fantasma. A arte ainda é provisória.
+de dash e o chefe, o Arquivo Fantasma. A arte é 1-bit com teal como cor da região, HUD estilo Windows 95 e fonte
+pixel própria com acentos, tudo gerado por `tools/make_art.py`.
+
+![Primeira sala de C:](docs/img/gameplay-start.png)
 
 O jogo abre na tela de título, salva sozinho e pausa com Esc (ou Start).
 Ao continuar, o cão volta ao último ponto de restauração.

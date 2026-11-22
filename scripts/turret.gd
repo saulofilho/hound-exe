@@ -6,6 +6,7 @@ const RANGE := 170.0
 const FIRE_EVERY := 1.6
 
 var _cooldown := 1.0
+var _sheet: Texture2D
 
 
 func _init() -> void:
@@ -15,6 +16,7 @@ func _init() -> void:
 func _ready() -> void:
 	super()
 	hp = 4
+	_sheet = Art.texture("turret")
 
 
 func _physics_process(delta: float) -> void:
@@ -35,9 +37,6 @@ func _physics_process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var c := body_color()
 	var warn := _cooldown < 0.35 and int(Time.get_ticks_msec() / 60) % 2 == 0
-	draw_rect(Rect2(-7, -2, 14, 10), c)            # base
-	draw_rect(Rect2(-4, -7, 8, 5), c)              # cúpula
-	draw_rect(Rect2(-2, -5, 4, 2), Color.WHITE if warn else Color.BLACK)  # olho avisa o tiro
-	draw_weak_point(Vector2(0, 4))
+	Art.frame(self, _sheet, 1 if warn else 0, Vector2(-8, -8), SPRITE, body_tint())  # o olho avisa o tiro
+	draw_weak_point(Vector2(0, 0))

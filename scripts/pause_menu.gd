@@ -15,29 +15,28 @@ func _ready() -> void:
 	GameMenu.setup_input()
 
 	var shade := ColorRect.new()
-	shade.color = Color(0, 0, 0, 0.88)
-	shade.size = Vector2(384, 216)
+	shade.color = Color(0, 0, 0, 0.8)
+	shade.size = Art.SCREEN
 	add_child(shade)
 
-	var heading := Label.new()
-	heading.text = "PROCESSO PAUSADO"
-	heading.position = Vector2(0, 34)
-	heading.size = Vector2(384, 20)
-	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	add_child(heading)
-
-	var note := Label.new()
-	note.text = "O progresso é salvo sozinho. Ao voltar, o cão\naparece no último ponto de restauração." if Game.save_path != "" else "Salvamento desligado: sala aberta sem passar pelo título."
-	note.position = Vector2(0, 60)
-	note.size = Vector2(384, 24)
-	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	note.add_theme_font_size_override("font_size", 9)
-	note.add_theme_color_override("font_color", Stage.ACCENT)
-	add_child(note)
+	var frame := Control.new()
+	frame.size = Art.SCREEN
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.draw.connect(_draw_window.bind(frame))
+	add_child(frame)
 
 	menu = GameMenu.new()
 	menu.position = Vector2((384 - GameMenu.WIDTH) / 2.0, 92)
 	add_child(menu)
+
+
+func _draw_window(on: Control) -> void:
+	Art.window(on, Rect2(68, 22, 248, 184), "Processo pausado")
+	var lines := ["O progresso é salvo sozinho. Ao voltar, o cão", "aparece no último ponto de restauração."]
+	if Game.save_path == "":
+		lines = ["Salvamento desligado:", "sala aberta sem passar pelo título."]
+	for i in lines.size():
+		Art.text_centered(on, 192, 46 + i * Art.LINE_H, lines[i], Art.MID)
 
 
 func _input(event: InputEvent) -> void:

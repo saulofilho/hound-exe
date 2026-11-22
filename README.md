@@ -9,7 +9,7 @@ machine, folder by folder, until it reaches the kernel. Working title.
 
 ![Concept art: the hound shoots a bug on platforms made of windows](docs/img/moodboard-hero.png)
 
-> **Status:** phase 1 (vertical slice) in progress · grey-box art · target platform: Steam
+> **Status:** phase 1 (vertical slice) in progress · awaiting playtests · target platform: Steam
 
 ## The game in short
 
@@ -26,13 +26,19 @@ machine, folder by folder, until it reaches the kernel. Working title.
 Feel references: *Gato Roboto*, *Not a Hero*, *Serious Sam: Bogus Detour* and
 *Minit*. Character, map and art are our own.
 
-## Prototype screenshots
+## Screenshots
 
-Grey-box build, captured from the game itself.
+Captured from the game itself.
+
+| Title | First room |
+|---|---|
+| ![Title screen: a window on a desktop, the hound sniffing after a bug](docs/img/title.png) | ![The hound in C:, with window platforms and the taskbar HUD](docs/img/gameplay-start.png) |
+| **Pause** | **Blue screen** |
+| ![Pause menu as a Windows 95 window](docs/img/pause.png) | ![Death shows a blue screen dialog](docs/img/blue-screen.png) |
 
 | Shooting bugs in Documentos | The laser only a dash gets through |
 |---|---|
-| ![The hound shooting at walking bugs](docs/img/gameplay-shoot.png) | ![Climbing platforms, a turret and the red laser barrier](docs/img/gameplay-laser.png) |
+| ![The hound shooting at walking bugs](docs/img/gameplay-shoot.png) | ![Climbing platforms, a turret and the laser barrier](docs/img/gameplay-laser.png) |
 | **The dash chip in Downloads** | **Sniffing in Lixeira** |
 | ![The dash chip waiting at the end of the Downloads branch](docs/img/gameplay-chip.png) | ![Sniffing: the fake wall and the trail show up in teal](docs/img/gameplay-sniff.png) |
 | **Explorer (Tab)** | **Top-down room** |
@@ -118,9 +124,9 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] Restore points; death returns you to the last one
 - [x] Explorer map (Tab) of visited rooms
 - [x] Top-down room returns to the region once cleared
-- [x] Region boss: *o Arquivo Fantasma* (placeholder art)
-- [ ] Windows 95 HUD and pixel fonts
-- [ ] Final 1-bit sprites and tiles
+- [x] Region boss: *o Arquivo Fantasma*
+- [x] Windows 95 HUD and pixel font
+- [x] 1-bit sprites, tiles and wallpaper
 - [x] Sound effects and music (original chiptune, volume settings)
 - [x] Title screen, pause menu, save to disk
 
@@ -163,6 +169,9 @@ godot --headless --path . -s tests/smoke.gd
 
 # start to top-down room door with inputs only (bugs removed), plus laser distances
 godot --headless --path . -s tests/route.gd
+
+# art: font coverage, text widths and sprite sheets
+godot --headless --path . -s tests/art.gd
 
 # audio: every event, saved volumes and the recorded mixer output
 # (about 80 seconds; needs real time, so no --fixed-fps)
@@ -218,6 +227,20 @@ godot --headless --path . --import
 - **Volume:** SOM in the title and pause menus, stored next to the save in
   `save.settings.json`.
 
+## Art
+
+All art, including the pixel font with Portuguese accents, is original and
+drawn as text in [`tools/make_art.py`](tools/make_art.py). After editing it:
+
+```bash
+python3 tools/make_art.py
+godot --headless --path . --import
+```
+
+White, black and one accent per region (teal for the Desktop), used only on
+what is playable. The blue screen is the one deliberate exception. Scenery is
+drawn from the same ASCII maps as the collisions.
+
 ## Project layout
 
 ```
@@ -232,6 +255,10 @@ scripts/
 ├── pause_menu.gd pause menu
 ├── menu.gd       option list for keyboard, gamepad and mouse
 ├── sound.gd      autoload "Sound": effects, layered music, volume
+├── art.gd        palette, pixel text, window frame
+├── room_art.gd   walls, window platforms and wallpaper from the map
+├── hud.gd        taskbar HUD and boss bar
+├── dialog_box.gd toasts and dialogs
 ├── rooms.gd      the Desktop region's rooms as ASCII maps, and how they link
 ├── stage.gd      shared base: controls, screen shake, hitstop, HUD, toasts
 ├── main.gd       room builder: exits, items, laser, restore point, door, Explorer
@@ -244,8 +271,10 @@ scripts/
 ├── walker.gd     patrolling bug
 ├── turret.gd     shooting bug
 └── chaser.gd     swarming bug (top-down room)
-tests/            smoke, route, arena, boss, save and audio tests
+tests/            smoke, route, arena, boss, save, audio and art tests
 audio/            generated WAV files
+art/              generated sprite sheets and font
+tools/make_art.py sprites and font, drawn as text
 tools/make_audio.py  synthesizer and scores
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images

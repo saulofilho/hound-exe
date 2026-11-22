@@ -65,7 +65,13 @@ func _spark() -> void:
 
 func _draw() -> void:
 	if friendly:
-		draw_rect(Rect2(-3, -1, 6, 2) if dir.y == 0.0 else Rect2(-1, -3, 2, 6), Color.WHITE)
+		draw_set_transform(Vector2.ZERO, dir.angle())
+		draw_rect(Rect2(-3, -1, 6, 2), Art.WHITE)
+		draw_rect(Rect2(-6, 0, 2, 1), Art.MID)
+		draw_set_transform(Vector2.ZERO)
 	else:
-		draw_circle(Vector2.ZERO, 3.0, Color(1.0, 0.42, 0.24))
-		draw_circle(Vector2.ZERO, 1.0, Color.BLACK)
+		# losango na cor da região: nada amigo tem essa forma
+		for row in range(-3, 4):
+			var half := 3 - absi(row)
+			draw_rect(Rect2(-half, row, half * 2 + 1, 1), Art.ACCENT)
+		draw_rect(Rect2(-1, -1, 3, 3), Art.WHITE)

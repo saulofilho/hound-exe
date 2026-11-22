@@ -108,7 +108,7 @@ func _make_button(text: String) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(WIDTH, 18)
-	button.add_theme_font_size_override("font_size", 10)
+	button.add_theme_font_size_override("font_size", Art.FONT_SIZE)
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	_paint(button, false)
 	button.focus_entered.connect(_paint.bind(button, true))
@@ -119,17 +119,16 @@ func _make_button(text: String) -> Button:
 
 ## Selecionado = invertido (fundo branco, texto preto).
 func _paint(button: Button, lit: bool) -> void:
-	var box := _box(Color.WHITE if lit else Color.BLACK)
+	var box := StyleBoxFlat.new()
+	box.bg_color = Art.WHITE if lit else Art.BLACK
+	box.border_color = Art.WHITE
+	box.set_border_width_all(1)
+	# borda mais grossa embaixo e à direita: o botão em relevo do Windows 95
+	box.border_width_bottom = 2
+	box.border_width_right = 2
+	box.anti_aliasing = false
 	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		button.add_theme_stylebox_override(state, box)
-	var ink := Color.BLACK if lit else Color.WHITE
+	var ink := Art.BLACK if lit else Art.WHITE
 	for state in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color"]:
 		button.add_theme_color_override(state, ink)
-
-
-func _box(fill: Color) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color = fill
-	box.border_color = Color.WHITE
-	box.set_border_width_all(1)
-	return box

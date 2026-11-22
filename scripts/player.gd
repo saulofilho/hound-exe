@@ -34,9 +34,11 @@ var _iframes := 0.0
 var _recoil := 0.0
 var _air_dash := true
 var _scent_t := 0.0
+var _sheet: Texture2D
 
 
 func _ready() -> void:
+	_sheet = Art.texture("hound")
 	collision_layer = 2
 	collision_mask = 1
 	var shape := CollisionShape2D.new()
@@ -198,29 +200,40 @@ func take_damage(amount: int, from: Vector2) -> void:
 	main.hitstop(0.06)
 	Sound.play("death" if hp <= 0 else "hurt")
 	if hp <= 0:
-		main.show_banner("TELA AZUL\n\nUm erro fatal ocorreu no hound.exe.\nR ou Start volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
+		main.show_banner("TELA AZUL\n\nUm erro fatal ocorreu no hound.exe.\nR ou Start volta ao ponto de restauração.", Color("1c2fa8"))
 		set_physics_process(false)
 		visible = false
 
 
 func _draw() -> void:
-	# cão provisório em blocos (corpo, cabeça, orelha, rabo e patas)
-	if _iframes > 0.0 and _dash_t <= 0.0 and int(_iframes * 20.0) % 2 == 0:
+	var hurt := _dash_t <= 0.0 and _iframes > IFRAMES - 0.2
+	if not hurt and _iframes > 0.0 and _dash_t <= 0.0 and int(_iframes * 20.0) % 2 == 0:
 		return
-	var c := Color(0.55, 0.85, 1.0) if _dash_t > 0.0 else Color.WHITE
-	var f := float(facing)
-	var flip := func(r: Rect2) -> Rect2:
-		return r if f > 0 else Rect2(Vector2(-r.position.x - r.size.x, r.position.y), r.size)
-	var hy := 3 if get_parent().sniffing else 0          # farejando: cabeça baixa
-	draw_rect(flip.call(Rect2(-6, -1, 10, 6)), c)        # corpo
-	draw_rect(flip.call(Rect2(3, -5 + hy, 5, 6)), c)     # cabeça
-	draw_rect(flip.call(Rect2(7, -3 + hy, 2, 3)), c)     # focinho
-	draw_rect(flip.call(Rect2(3, -7 + hy, 2, 2)), c)     # orelha
-	draw_rect(flip.call(Rect2(5, -3 + hy, 1, 1)), Color.BLACK)  # olho
-	draw_rect(flip.call(Rect2(-8, -2, 2, 1)), c)         # rabo
-	var step := int(Time.get_ticks_msec() / 120) % 2 if absf(velocity.x) > 10.0 and is_on_floor() else 0
-	for lx in [-5, -2, 1, 3]:
-		draw_rect(flip.call(Rect2(lx + step, 5, 1, 3)), c)  # patas
+	var pose := _pose(hurt)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2(_dash_dir if _dash_t > 0.0 else facing, 1))
 	if _dash_t > 0.0:
-		for i in 3:
-			draw_rect(flip.call(Rect2(-12 - i * 5, i * 2 - 1, 3, 1)), c)
+		for i in [2, 1]:  # rastro do dash
+			Art.frame(self, _sheet, pose, Vector2(-12 - i * 8, -8), Vector2(24, 16), Color(1, 1, 1, 0.45 / i))
+	Art.frame(self, _sheet, pose, Vector2(-12, -8), Vector2(24, 16))
+	draw_set_transform(Vector2.ZERO)
+
+
+## Quadro da folha hound.png (a ordem está em tools/make_art.py).
+func _pose(hurt: bool) -> int:
+	var now := Time.get_ticks_msec()
+	if hurt:
+		return 13
+	if _dash_t > 0.0:
+		return 8
+	var shooting := _fire_cd > 0.0
+	if shooting and Input.is_action_pressed("up"):
+		return 12
+	if get_parent().sniffing:
+		return 9 + now / 110 % 2
+	if not is_on_floor():
+		return 6 if velocity.y < 0.0 else 7
+	if absf(velocity.x) > 30.0:
+		return 2 + posmod(int(global_position.x / 7.0) * facing, 4)
+	if shooting:
+		return 11
+	return 1 if now % 2400 < 160 else 0

@@ -24,7 +24,22 @@ var boss_return := {}           # para onde a saída do chefe devolve o cão
 
 
 func _ready() -> void:
+	_install_font()
 	process_mode = Node.PROCESS_MODE_ALWAYS  # fechar a janela vale também na pausa
+
+
+## A fonte pixel (tools/make_art.py) vale para o jogo inteiro.
+func _install_font() -> void:
+	var font: FontFile = load("res://art/hound_font.fnt")
+	font.fixed_size_scale_mode = TextServer.FIXED_SIZE_SCALE_INTEGER_ONLY
+	ThemeDB.fallback_font = font
+	ThemeDB.fallback_font_size = 11
+	ThemeDB.get_default_theme().default_font = font
+	ThemeDB.get_default_theme().default_font_size = 11
+
+
+func _exit_tree() -> void:
+	Art.release()
 
 
 func new_game() -> void:

@@ -4,12 +4,12 @@ extends Node2D
 ## controles, câmera com tremor, hitstop, HUD, avisos e reinício.
 
 const TILE := 16
-const ACCENT := Color(0.18, 0.71, 0.66)  # teal da área de trabalho (cor do faro)
+const ACCENT := Art.ACCENT
 
 var camera: Camera2D
-var hud: Label
-var banner: Label
-var toast: Label
+var hud: Hud
+var banner: DialogBox
+var toast: DialogBox
 var _toast_t := 0.0
 var sniffing := false
 var _shake := 0.0
@@ -103,7 +103,7 @@ func show_toast(text: String, seconds := 2.0) -> void:
 
 func show_banner(text: String, color: Color) -> void:
 	banner.text = text
-	banner.add_theme_color_override("font_color", color)
+	banner.fill = color
 	banner.visible = true
 
 
@@ -125,29 +125,17 @@ func _process(delta: float) -> void:
 func _build_hud(help: String) -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
-	hud = Label.new()
-	hud.position = Vector2(6, 4)
+	hud = Hud.new()
+	hud.hint = help
 	layer.add_child(hud)
-	banner = Label.new()
-	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	banner.size = Vector2(384, 216)
-	banner.visible = false
-	layer.add_child(banner)
-	toast = Label.new()
-	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	toast.position = Vector2(0, 150)
-	toast.size = Vector2(384, 40)
-	toast.add_theme_font_size_override("font_size", 10)
-	toast.add_theme_color_override("font_color", ACCENT)
+	toast = DialogBox.new()
+	toast.top = 22.0
 	toast.visible = false
 	layer.add_child(toast)
-	var hint := Label.new()
-	hint.text = help
-	hint.position = Vector2(6, 200)
-	hint.add_theme_font_size_override("font_size", 8)
-	hint.modulate = Color(1, 1, 1, 0.6)
-	layer.add_child(hint)
+	banner = DialogBox.new()
+	banner.titled = true
+	banner.visible = false
+	layer.add_child(banner)
 
 
 # ---- controles

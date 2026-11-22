@@ -19,9 +19,11 @@ var _dash_t := 0.0
 var _dash_cd := 0.0
 var _fire_cd := 0.0
 var _iframes := 0.0
+var _sheet: Texture2D
 
 
 func _ready() -> void:
+	_sheet = Art.texture("top_hound")
 	collision_layer = 2
 	collision_mask = 1
 	var shape := CollisionShape2D.new()
@@ -95,7 +97,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	stage.hitstop(0.06)
 	Sound.play("death" if hp <= 0 else "hurt")
 	if hp <= 0:
-		stage.show_banner("TELA AZUL\n\nO processo hound.exe parou de responder.\nR ou Start volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
+		stage.show_banner("TELA AZUL\n\nO processo hound.exe parou de responder.\nR ou Start volta ao ponto de restauração.", Color("1c2fa8"))
 		set_physics_process(false)
 		visible = false
 
@@ -103,15 +105,11 @@ func take_damage(amount: int, from: Vector2) -> void:
 func _draw() -> void:
 	if _iframes > 0.0 and _dash_t <= 0.0 and int(_iframes * 20.0) % 2 == 0:
 		return
-	var c := Color(0.55, 0.85, 1.0) if _dash_t > 0.0 else Color.WHITE
-	draw_set_transform(Vector2.ZERO, aim.angle())   # tudo desenhado virado para a mira
-	draw_rect(Rect2(-6, -3, 10, 6), c)              # corpo
-	draw_rect(Rect2(3, -3, 5, 6), c)                # cabeça
-	draw_rect(Rect2(8, -1, 2, 2), c)                # focinho
-	draw_rect(Rect2(4, -5, 2, 2), c)                # orelhas
-	draw_rect(Rect2(4, 3, 2, 2), c)
-	draw_rect(Rect2(-9, -1, 3, 1), c)               # rabo
-	draw_rect(Rect2(6, -2, 1, 1), Color.BLACK)      # olhos
-	draw_rect(Rect2(6, 1, 1, 1), Color.BLACK)
-	draw_rect(Rect2(10, 0, 3, 1), Color(1, 1, 1, 0.5))  # indicador de mira
+	var step := Time.get_ticks_msec() / 90 % 4 if velocity.length() > 15.0 else 1
+	if _dash_t > 0.0:
+		draw_set_transform(-_move_dir * 9.0, aim.angle())
+		Art.frame(self, _sheet, step, Vector2(-12, -12), Vector2(24, 24), Color(1, 1, 1, 0.35))
+	draw_set_transform(Vector2.ZERO, aim.angle())   # tudo virado para a mira
+	Art.frame(self, _sheet, step, Vector2(-12, -12), Vector2(24, 24))
+	draw_rect(Rect2(14, 0, 2, 1), Art.MID)          # indicador de mira
 	draw_set_transform(Vector2.ZERO)

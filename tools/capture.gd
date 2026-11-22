@@ -19,6 +19,7 @@ func _frames(n: int) -> void:
 
 func _shot(file: String) -> void:
 	await process_frame
+	RenderingServer.force_draw()  # desenha mesmo com a janela coberta
 	var img := root.get_texture().get_image()
 	img.resize(img.get_width() * 3, img.get_height() * 3, Image.INTERPOLATE_NEAREST)
 	img.save_png("res://docs/img/" + file)
@@ -31,6 +32,7 @@ func _go(room: String, pos: Vector2) -> void:
 
 func _run() -> void:
 	await physics_frame
+	await _menus()
 	G.new_game()
 	for r in ["c_drive", "docs", "downloads", "trash"]:
 		G.visited[r] = true
@@ -137,3 +139,29 @@ func _boss() -> void:
 	Input.action_release("map")
 	await _frames(5)
 	await _shot("gameplay-explorer.png")
+
+
+## Título, pausa, primeira sala e tela azul. O disco fica desligado ao jogar.
+func _menus() -> void:
+	G.save_path = "user://capture_unused.json"  # o título só lê; nada é gravado
+	change_scene_to_file("res://title.tscn")
+	await _frames(10)
+	await _shot("title.png")
+
+	G.save_path = ""
+	G.new_game()
+	G.enter("c_drive")
+	await _frames(150)
+	await _shot("gameplay-start.png")
+	var s = current_scene
+	G.save_path = "user://capture_unused.json"  # só para o texto da pausa
+	s.pause_menu.open()
+	await _frames(4)
+	await _shot("pause.png")
+	s.pause_menu.close()
+	await _frames(6)
+	G.save_path = ""
+	s.player.hp = 1
+	s.player.take_damage(1, s.player.global_position + Vector2(10, 0))
+	await _frames(20)
+	await _shot("blue-screen.png")

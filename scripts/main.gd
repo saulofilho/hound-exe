@@ -2,9 +2,15 @@ extends Stage
 ## Sala lateral da região: monta a sala atual (Game.room) a partir de Rooms.DATA
 ## e cuida de saídas, itens, laser, ponto de restauração, porta, chefe e Explorer.
 
-const WALL := Color(0.36, 0.36, 0.4)
-const WALL_TOP := Color(0.62, 0.62, 0.66)
-const LASER := Color(1.0, 0.2, 0.33)
+const SPRITE := Vector2(16, 16)
+# quadros de items.png
+const RESTORE_OFF := 0
+const RESTORE_ON := 1
+const CHIP := 2
+const PATCH := 3
+const DOOR := 4
+const DOOR_CLEAR := 5
+const DOOR_LOCKED := 6
 
 var MAP: Array = []
 var data: Dictionary
@@ -19,12 +25,17 @@ var _leaving := false
 var _door_told := false
 var _map_view: Control
 var boss: GhostFile
-var exit_pos := Vector2.ZERO   # saída da sala do chefe, escondida até ele cair
-var _boss_bar: ColorRect
+var exit_pos := Vector2.ZERO   # saída da sala do chefe, trancada até ele cair
+var _room_art: RoomArt
+var _items: Texture2D
+var _laser_sheet: Texture2D
 
 
 func help_text() -> String:
-	return "A/D mover · Espaço pular · J atirar · K dash · Shift farejar · Tab Explorer · Esc pausa"
+	# só a primeira sala ensina; nas outras a tela fica livre
+	if Game.room != Game.START_ROOM:
+		return ""
+	return "A/D anda · Espaço pula · J atira · Shift fareja · Tab mapa · Esc pausa"
 
 
 func _key(pos: Vector2) -> String:
@@ -36,6 +47,13 @@ func _key(pos: Vector2) -> String:
 func _build_level() -> void:
 	data = Rooms.DATA[Game.room]
 	MAP = data.map
+	_items = Art.texture("items")
+	_laser_sheet = Art.texture("laser")
+	_room_art = RoomArt.new()
+	_room_art.map = MAP
+	_room_art.theme = Game.room
+	_room_art.exits = data.links
+	add_child(_room_art)
 	Game.visited[Game.room] = true
 	var start := Vector2.ZERO
 	var boss_at := Vector2.ZERO
@@ -97,17 +115,11 @@ func _build_level() -> void:
 
 func _ready() -> void:
 	super()
+	hud.place = "~fantasma.tmp" if Game.room == "ghost" else data.name
+	hud.hp = player.hp
+	hud.energy = player.sniff_energy
 	if boss != null:
-		var back := ColorRect.new()
-		back.color = WALL
-		back.position = Vector2(252, 9)
-		back.size = Vector2(124, 7)
-		hud.get_parent().add_child(back)
-		_boss_bar = ColorRect.new()
-		_boss_bar.color = Enemy.BUG_COLOR
-		_boss_bar.position = Vector2(2, 2)
-		_boss_bar.size = Vector2(120, 3)
-		back.add_child(_boss_bar)
+		hud.boss_life = 1.0
 	hud.get_parent().add_child(_map_view)
 	if boss != null:
 		show_toast("ARQUIVO FANTASMA\nFareje para torná-lo sólido, ou espere ele bater.", 3.0)
@@ -157,55 +169,28 @@ func is_solid_at(pos: Vector2) -> bool:
 # ------------------------------------------------------------------ desenho
 
 func _draw() -> void:
-	for y in MAP.size():
-		var row: String = MAP[y]
-		for x in row.length():
-			if row[x] != "#":
-				continue
-			var r := Rect2(x * TILE, y * TILE, TILE, TILE)
-			draw_rect(r, WALL)
-			if y > 0 and not is_solid(Vector2i(x, y - 1)):
-				draw_rect(Rect2(r.position, Vector2(TILE, 2)), WALL_TOP)
-
-	for c in fake_walls:
-		var r := Rect2(c - Vector2(TILE, TILE) / 2.0, Vector2(TILE, TILE))
-		if sniffing:
-			_dashed_rect(r.grow(-1), ACCENT)
-		else:
-			draw_rect(r, WALL)
-
 	var t := Time.get_ticks_msec()
+	var corner := SPRITE / 2.0
+
+	if sniffing:
+		for c in fake_walls:
+			_dashed_rect(Rect2(c - corner, SPRITE).grow(-1), ACCENT)
+
 	for l in lasers:
-		var w := 2.0 + float(t / 50 % 3)
-		draw_rect(Rect2(l.x - w / 2.0, l.y - TILE / 2.0, w, TILE), LASER)
-		draw_rect(Rect2(l.x - 4, l.y - TILE / 2.0, 8, 1), LASER)
-
+		Art.frame(self, _laser_sheet, t / 60 % 3, l - corner, SPRITE)
 	for p in patches:
-		draw_rect(Rect2(p - Vector2(1, 4), Vector2(2, 8)), Color.WHITE)
-		draw_rect(Rect2(p - Vector2(4, 1), Vector2(8, 2)), Color.WHITE)
-
+		Art.frame(self, _items, PATCH, p - corner, SPRITE)
 	for c in chips:
-		var bob := Vector2(0, -2 if t / 300 % 2 == 0 else 0)
-		draw_rect(Rect2(c - Vector2(5, 4) + bob, Vector2(10, 8)), ACCENT)
-		draw_rect(Rect2(c - Vector2(3, 2) + bob, Vector2(6, 4)), Color.BLACK)
-		for i in 3:
-			draw_rect(Rect2(c + Vector2(-4 + i * 3, 4) + bob, Vector2(1, 2)), ACCENT)
-
+		Art.frame(self, _items, CHIP, c - corner + Vector2(0, -2 if t / 300 % 2 == 0 else 0), SPRITE)
 	if restore_pos != Vector2.ZERO:
-		# monitor antigo: o ponto de restauração
 		var lit: bool = Game.restore.get("room", "") == Game.room
-		draw_rect(Rect2(restore_pos - Vector2(6, 6), Vector2(12, 9)), Color.WHITE, false, 1.0)
-		draw_rect(Rect2(restore_pos - Vector2(4, 4), Vector2(8, 5)), ACCENT if lit else Color(1, 1, 1, 0.25))
-		draw_rect(Rect2(restore_pos + Vector2(-3, 4), Vector2(6, 4)), Color.WHITE)
+		Art.frame(self, _items, RESTORE_ON if lit else RESTORE_OFF, restore_pos - corner, SPRITE)
 
+	var cleared: bool = Game.taken.has("boss_desktop")
 	if door_pos != Vector2.ZERO:
-		var open: bool = not Game.taken.has("boss_desktop")
-		draw_rect(Rect2(door_pos - Vector2(6, 8), Vector2(12, 16)), Color.WHITE, false, 1.0)
-		draw_rect(Rect2(door_pos - Vector2(2, 2), Vector2(4, 4)), Color.WHITE if open else ACCENT)
-
-	if exit_pos != Vector2.ZERO and Game.taken.has("boss_desktop"):
-		draw_rect(Rect2(exit_pos - Vector2(6, 8), Vector2(12, 16)), Color.WHITE, false, 1.0)
-		draw_rect(Rect2(exit_pos - Vector2(2, 2), Vector2(4, 4)), ACCENT)
+		Art.frame(self, _items, DOOR_CLEAR if cleared else DOOR, door_pos - corner, SPRITE)
+	if exit_pos != Vector2.ZERO:
+		Art.frame(self, _items, DOOR if cleared else DOOR_LOCKED, exit_pos - corner, SPRITE)
 
 	if sniffing and is_instance_valid(player):
 		var targets := fake_walls + chips
@@ -291,9 +276,11 @@ func stage_process(_delta: float) -> void:
 	elif door_pos != Vector2.ZERO and pp.distance_to(door_pos) > 40.0:
 		_door_told = false
 
-	if _boss_bar != null:
-		var left := float(boss.hp) / GhostFile.MAX_HP_BOSS if is_instance_valid(boss) else 0.0
-		_boss_bar.size.x = 120.0 * left
+	_room_art.reveal = sniffing
+	if is_instance_valid(boss):
+		hud.boss_life = float(boss.hp) / GhostFile.MAX_HP_BOSS
+	else:
+		hud.boss_life = -1.0
 
 	if exit_pos != Vector2.ZERO and Game.taken.has("boss_desktop") and player.hp > 0 and pp.distance_to(exit_pos) < 10.0:
 		_leaving = true
@@ -308,7 +295,9 @@ func stage_process(_delta: float) -> void:
 
 	_update_tension(pp)
 	_check_exit(pp)
-	hud.text = "VIDA %d/%d   FARO %d%%" % [maxi(player.hp, 0), player.MAX_HP, int(player.sniff_energy)]
+	hud.hp = maxi(player.hp, 0)
+	hud.energy = player.sniff_energy
+	hud.sniffing = sniffing
 
 
 ## A camada extra da música: bug por perto ou, no chefe, a segunda fase.
@@ -373,21 +362,21 @@ class ExplorerView extends Control:
 
 	func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.85))
-		var box := Rect2(Vector2(72, 40), Vector2(240, 136))
-		draw_rect(box, Color.WHITE, false, 1.0)
-		draw_rect(Rect2(box.position, Vector2(box.size.x, 10)), Color.WHITE)
-		draw_string(ThemeDB.fallback_font, box.position + Vector2(4, 8), "EXPLORER · " + Rooms.DATA[Game.room].name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.BLACK)
-		var origin := box.position + Vector2(14, 66)
+		var box := Rect2(60, 32, 264, 140)
+		Art.window(self, box, "Explorer - " + Rooms.DATA[Game.room].name)
+		var origin := box.position + Vector2(26, 64)
 		var blink := Time.get_ticks_msec() / 300 % 2 == 0
+		var monitor := Art.texture("items")
 		for id in Rooms.DATA:
 			if not Game.visited.has(id):
 				continue
 			var r: Dictionary = Rooms.DATA[id]
 			var screens: int = maxi(1, r.map[0].length() / 24)
 			var rect := Rect2(origin + Vector2(r.grid) * CELL, Vector2(screens * CELL.x - 3, CELL.y - 3))
-			var cur: bool = id == Game.room
-			draw_rect(rect, Stage.ACCENT if cur and blink else Color(0.36, 0.36, 0.4))
-			draw_rect(rect, Color.WHITE, false, 1.0)
+			var here: bool = id == Game.room
+			draw_rect(rect, Art.ACCENT if here and blink else Art.SHADE)
+			Art.border(self, rect)
 			if Game.restore.get("room", "") == id:
-				draw_rect(Rect2(rect.position + Vector2(3, 3), Vector2(4, 4)), Color.WHITE)
-		draw_string(ThemeDB.fallback_font, box.position + Vector2(6, box.size.y - 6), "[] ponto de restauração · Tab fecha", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.6))
+				Art.frame(self, monitor, 1, rect.position + Vector2(2, 2), Vector2(16, 16))
+		Art.frame(self, monitor, 1, box.position + Vector2(8, box.size.y - 21), Vector2(16, 16))
+		Art.text(self, box.position + Vector2(28, box.size.y - 18), "ponto de restauração · Tab fecha", Art.MID)

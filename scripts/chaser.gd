@@ -3,6 +3,7 @@ extends Enemy
 ## Bug da sala de cima: corre direto para o cão, em enxame.
 
 var speed := 40.0
+var _sheet: Texture2D
 
 
 func _init() -> void:
@@ -12,6 +13,7 @@ func _init() -> void:
 func _ready() -> void:
 	super()
 	hp = 2
+	_sheet = Art.texture("chaser")
 
 
 func _physics_process(delta: float) -> void:
@@ -25,13 +27,5 @@ func _physics_process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var c := body_color()
-	var legs := int(Time.get_ticks_msec() / 120) % 2
-	draw_rect(Rect2(-5, -3, 10, 10), c)            # corpo visto de cima
-	draw_rect(Rect2(-3, -6, 6, 3), c)              # cabeça
-	draw_rect(Rect2(-2, -5, 1, 1), Color.BLACK)
-	draw_rect(Rect2(1, -5, 1, 1), Color.BLACK)
-	for ly in [-1, 2, 5]:
-		draw_rect(Rect2(-7 - legs, ly, 2, 1), c)    # patas
-		draw_rect(Rect2(5 + legs, ly, 2, 1), c)
+	Art.frame(self, _sheet, Time.get_ticks_msec() / 120 % 2, Vector2(-8, -6), SPRITE, body_tint())
 	draw_weak_point(Vector2(0, 2))

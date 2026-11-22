@@ -18,7 +18,7 @@ const RIGHT_X := 348.0
 const PERCH_Y := 70.0
 const FALL_Y := 162.0                 # atordoado, cai ao alcance do tiro reto
 const CONTACT := 17.0
-const PAPER := Color(0.92, 0.92, 0.86)
+const SPRITE_SIZE := Vector2(32, 36)
 
 var state: State = State.INTRO
 var lane: float = LANES[0]
@@ -26,6 +26,7 @@ var side := 1                         # 1 = direita da sala, -1 = esquerda
 var _left := 1.6                      # tempo que falta no estado atual
 var _shot_t := 0.0
 var _player: Node2D
+var _sheet: Texture2D
 
 
 func _init() -> void:
@@ -36,6 +37,7 @@ func _ready() -> void:
 	hp = MAX_HP_BOSS
 	contact_radius = 0.0
 	collision_layer = 0
+	_sheet = Art.texture("ghost")
 	collision_mask = 0  # é um fantasma: atravessa plataformas
 	var shape := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
@@ -187,39 +189,17 @@ func _draw_warning(off: Vector2) -> void:
 		i += 10.0
 
 
-## Uma folha de canto dobrado e barra rasgada. `solid` = dá para acertar.
+## `solid` = dá para acertar. A folha ghost.png tem os cinco estados.
 func _draw_file(off: Vector2, solid: bool) -> void:
-	var shape := PackedVector2Array([
-		Vector2(-12, -15), Vector2(6, -15), Vector2(12, -9), Vector2(12, 14),
-		Vector2(8, 10), Vector2(4, 15), Vector2(0, 10), Vector2(-4, 15),
-		Vector2(-8, 10), Vector2(-12, 14),
-	])
-	for i in shape.size():
-		shape[i] += off
-	var charging := state == State.CHARGE
-	var fill := PAPER
+	var look := 1  # escondido
 	if _flash > 0.0:
-		fill = BUG_COLOR
-	elif not solid:
-		fill.a = 0.55 if charging else 0.16
-	draw_colored_polygon(shape, fill)
-
-	var edge := BUG_COLOR if charging else PAPER
-	var outline := shape.duplicate()
-	outline.append(shape[0])
-	draw_polyline(outline, edge, 1.0)
-	draw_polyline(PackedVector2Array([off + Vector2(6, -15), off + Vector2(6, -9), off + Vector2(12, -9)]), edge, 1.0)
-
-	var ink := Color.BLACK if solid else edge
-	if state == State.STUNNED:
-		# olhos em X
-		for ex in [-5.0, 4.0]:
-			draw_line(off + Vector2(ex - 2, -5), off + Vector2(ex + 2, -1), ink)
-			draw_line(off + Vector2(ex + 2, -5), off + Vector2(ex - 2, -1), ink)
-	else:
-		draw_rect(Rect2(off + Vector2(-7, -6), Vector2(4, 5)), ink)
-		draw_rect(Rect2(off + Vector2(2, -6), Vector2(4, 5)), ink)
-	for i in 3:
-		draw_rect(Rect2(off + Vector2(-7, 2 + i * 3), Vector2(13 - i * 3, 1)), ink)
+		look = 4
+	elif state == State.STUNNED:
+		look = 3
+	elif state == State.CHARGE:
+		look = 2
+	elif solid:
+		look = 0
+	Art.frame(self, _sheet, look, (off - Vector2(16, 19)).round(), SPRITE_SIZE)
 	if off == Vector2.ZERO and solid:
 		draw_weak_point(off + Vector2(0, 2))

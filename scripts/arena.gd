@@ -20,8 +20,6 @@ const MAP := [
 	"#s..........s.........s#",
 	"########################",
 ]
-const WALL := Color(0.36, 0.36, 0.4)
-const WALL_TOP := Color(0.62, 0.62, 0.66)
 
 var hound: TopHound
 var spawns: Array[Vector2] = []
@@ -31,8 +29,12 @@ var _wave_t := 1.2
 var _over := false
 
 
-func help_text() -> String:
-	return "mover WASD · mirar mouse ou analógico direito · atirar J/clique · dash K · Esc pausa"
+func _ready() -> void:
+	super()
+	hud.hp = hound.hp
+	hud.seconds_left = int(DURATION)
+	# um aviso que some: linha fixa embaixo taparia bugs e o cão
+	show_toast("WASD anda · mouse mira · clique ou J atira · K dash", 3.5)
 
 
 func _build_level() -> void:
@@ -54,23 +56,22 @@ func _build_level() -> void:
 			elif row[x] == "s":
 				spawns.append(at)
 			x += 1
+	var room_art := RoomArt.new()
+	room_art.map = MAP
+	room_art.theme = "arena"
+	add_child(room_art)
 	Sound.music("arena")
 	# a sala inteira cabe na tela: câmera fixa no centro
 	camera.position = Vector2(MAP[0].length(), MAP.size()) * TILE / 2.0
 
 
 func _draw() -> void:
-	for y in MAP.size():
-		var row: String = MAP[y]
-		for x in row.length():
-			var r := Rect2(x * TILE, y * TILE, TILE, TILE)
-			if row[x] == "#":
-				draw_rect(r, WALL)
-				draw_rect(Rect2(r.position, Vector2(TILE, 2)), WALL_TOP)
-			elif (x + y) % 2 == 0:
-				draw_rect(Rect2(r.get_center(), Vector2(1, 1)), Color(1, 1, 1, 0.18))  # piso
+	# onde os bugs surgem
 	for s in spawns:
-		draw_rect(Rect2(s - Vector2(4, 4), Vector2(8, 8)), Enemy.BUG_COLOR, false, 1.0)
+		for corner in [Vector2(-6, -6), Vector2(6, -6), Vector2(-6, 6), Vector2(6, 6)]:
+			var at: Vector2 = s + corner
+			draw_line(at, at - Vector2(corner.sign().x * 3, 0), ACCENT, 1.0)
+			draw_line(at, at - Vector2(0, corner.sign().y * 3), ACCENT, 1.0)
 
 
 func hero_dead() -> bool:
@@ -81,6 +82,7 @@ func stage_process(delta: float) -> void:
 	if _over or not is_instance_valid(hound):
 		return
 	if hound.hp <= 0:
+		hud.hp = 0
 		_over = true
 		return
 
@@ -90,7 +92,9 @@ func stage_process(delta: float) -> void:
 		_spawn_wave()
 
 	var bugs := get_tree().get_nodes_in_group("enemy")
-	hud.text = "PROCESSO %02ds   VIDA %d/%d   BUGS %d" % [ceili(time_left), maxi(hound.hp, 0), hound.MAX_HP, bugs.size()]
+	hud.hp = maxi(hound.hp, 0)
+	hud.seconds_left = ceili(time_left)
+	hud.bugs = bugs.size()
 
 	if time_left <= 0.0:
 		_over = true
@@ -98,7 +102,7 @@ func stage_process(delta: float) -> void:
 			b._burst()
 			b.queue_free()
 		add_shake(6.0)
-		show_banner("PROCESSO CONCLUÍDO", ACCENT)
+		show_banner("PROCESSO CONCLUÍDO\n\nVoltando para a região...", ACCENT)
 		Sound.music("")
 		Sound.play("victory")
 		Game.taken["arena_desktop"] = true

@@ -2,7 +2,7 @@ extends Control
 ## Tela de título: continuar, novo jogo (com confirmação) e sair.
 ## É quem liga o salvamento em disco.
 
-const ACCENT := Color(0.18, 0.71, 0.66)
+const ICONS := [[0, "Documentos"], [3, "Downloads"], [4, "Lixeira"]]
 
 var menu: GameMenu
 var message: Label
@@ -22,25 +22,26 @@ func _ready() -> void:
 	Sound.muffled = false
 	Sound.music("title")
 
-	_label("HOUND.EXE", Vector2(0, 20), 34, Color.WHITE)
-	message = _label("", Vector2(0, 98), 9, ACCENT)
+	message = _label("", Vector2(0, 98))
 	menu = GameMenu.new()
 	menu.position = Vector2((384 - GameMenu.WIDTH) / 2.0, 114)
 	add_child(menu)
-	_label("setas ou W/S escolhem · Enter ou A confirma", Vector2(0, 198), 8, Color(1, 1, 1, 0.5))
 	show_main()
 
 
-func _label(text: String, at: Vector2, font_size: int, color: Color) -> Label:
+func _label(content: String, at: Vector2) -> Label:
 	var label := Label.new()
-	label.text = text
+	label.text = content
 	label.position = at
-	label.size = Vector2(384, 12)
+	label.size = Vector2(Art.SCREEN.x, Art.LINE_H)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_color", Art.ACCENT)
 	add_child(label)
 	return label
+
+
+func _process(_delta: float) -> void:
+	queue_redraw()  # o cão anima
 
 
 func show_main() -> void:
@@ -104,15 +105,26 @@ func _input(event: InputEvent) -> void:
 
 
 func _draw() -> void:
-	# o cão provisório, 3×, farejando um rastro até um bug
-	draw_set_transform(Vector2(140, 76), 0.0, Vector2(3, 3))
-	for r in [Rect2(-6, -1, 10, 6), Rect2(3, -2, 5, 6), Rect2(7, 0, 2, 3), Rect2(3, -4, 2, 2), Rect2(-8, -2, 2, 1), Rect2(-5, 5, 1, 3), Rect2(-2, 5, 1, 3), Rect2(1, 5, 1, 3), Rect2(3, 5, 1, 3)]:
-		draw_rect(r, Color.WHITE)
-	draw_rect(Rect2(5, 0, 1, 1), Color.BLACK)
+	var icons := Art.texture("icons")
+	for i in ICONS.size():
+		for x in [4.0, 344.0]:
+			var at := Vector2(x + 6, 12 + i * 58)
+			Art.frame(self, icons, ICONS[i][0], at, Vector2(24, 24), Art.MID if x < 100 else Art.DIM)
+		Art.text_centered(self, 25.5, 38 + i * 58, ICONS[i][1], Art.MID)
+
+	Art.window(self, Rect2(52, 3, 280, 194), "C:\\hound.exe")
+	Art.text_centered(self, 192, 18, "HOUND.EXE", Art.WHITE, 3)
+
+	# o cão farejando um rastro até um bug
+	var step := Time.get_ticks_msec() / 160
+	draw_set_transform(Vector2(112, 62), 0.0, Vector2(2, 2))
+	Art.frame(self, Art.texture("hound"), 9 + step % 2, Vector2.ZERO, Vector2(24, 16))
+	draw_set_transform(Vector2(234, 62), 0.0, Vector2(2, 2))
+	Art.frame(self, Art.texture("walker"), step % 4, Vector2.ZERO, Vector2(16, 16))
 	draw_set_transform(Vector2.ZERO)
-	for x in range(178, 238, 10):
-		draw_rect(Rect2(x, 91, 4, 3), ACCENT)
-	draw_rect(Rect2(244, 82, 16, 12), Enemy.BUG_COLOR)
-	draw_rect(Rect2(247, 78, 10, 4), Enemy.BUG_COLOR)
-	for x in [245, 251, 257]:
-		draw_rect(Rect2(x, 94, 2, 5), Enemy.BUG_COLOR)
+	for i in 8:
+		if (i - step) % 3 != 0:
+			draw_rect(Rect2(164 + i * 8, 89, 3, 3), Art.ACCENT)
+
+	var x := Art.taskbar(self)
+	Art.text(self, Vector2(x, Art.SCREEN.y - Art.BAR_H + 3), "setas ou W/S escolhem · Enter ou A confirma", Art.MID)

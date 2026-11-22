@@ -2,8 +2,8 @@ class_name Enemy
 extends CharacterBody2D
 ## Base dos bugs: vida, piscar ao ser atingido, knockback e morte com estilhaços.
 
-const HIT_COLOR := Color.WHITE
-const BUG_COLOR := Color(1.0, 0.42, 0.24)  # cor de destaque provisória
+const BUG_COLOR := Art.ACCENT  # olhos, tiros e avisos: a cor da região
+const SPRITE := Vector2(16, 16)
 
 var hp := 3
 var contact_radius := 13.0    # 0 = não machuca ao encostar
@@ -51,7 +51,7 @@ func _burst() -> void:
 	p.gravity = Vector2(0, 300)
 	p.scale_amount_min = 2.0
 	p.scale_amount_max = 3.0
-	p.color = BUG_COLOR
+	p.color = Art.WHITE
 	p.global_position = global_position
 	get_parent().add_child(p)
 	p.finished.connect(p.queue_free)
@@ -66,9 +66,10 @@ func tick(delta: float) -> void:
 ## Durante o faro, o ponto fraco pisca em branco (o tiro ali vale dobrado).
 func draw_weak_point(at: Vector2) -> void:
 	if get_parent().sniffing and int(Time.get_ticks_msec() / 80) % 2 == 0:
-		draw_rect(Rect2(at - Vector2(2, 2), Vector2(4, 4)), Color.WHITE)
-		draw_rect(Rect2(at - Vector2(1, 1), Vector2(2, 2)), Color.BLACK)
+		draw_rect(Rect2(at - Vector2(3, 3), Vector2(6, 6)), Art.BLACK)
+		draw_rect(Rect2(at - Vector2(2, 2), Vector2(4, 4)), Art.ACCENT)
+		draw_rect(Rect2(at - Vector2(1, 1), Vector2(2, 2)), Art.WHITE)
 
 
-func body_color() -> Color:
-	return HIT_COLOR if _flash > 0.0 else BUG_COLOR
+func body_tint() -> Color:
+	return Art.ACCENT if _flash > 0.0 else Color.WHITE
