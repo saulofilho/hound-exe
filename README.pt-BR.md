@@ -28,6 +28,11 @@ de dash e o chefe, o Arquivo Fantasma. A arte ainda é provisória.
 
 O jogo abre na tela de título, salva sozinho e pausa com Esc (ou Start).
 Ao continuar, o cão volta ao último ponto de restauração.
+A música e os efeitos são originais (`tools/make_audio.py`); o volume fica em
+SOM, no título e na pausa.
+
+Depois de clonar, importe uma vez antes de rodar:
+`godot --headless --path . --import`.
 
 ### Como rodar
 

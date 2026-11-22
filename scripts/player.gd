@@ -33,6 +33,7 @@ var _fire_cd := 0.0
 var _iframes := 0.0
 var _recoil := 0.0
 var _air_dash := true
+var _scent_t := 0.0
 
 
 func _ready() -> void:
@@ -79,6 +80,7 @@ func _physics_process(delta: float) -> void:
 
 		if _buffer > 0.0 and _coyote > 0.0:
 			velocity.y = JUMP
+			Sound.play("jump")
 			_buffer = 0.0
 			_coyote = 0.0
 		if Input.is_action_just_released("jump") and velocity.y < 0.0:
@@ -87,6 +89,7 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("dash") and Game.abilities.dash and _dash_cd == 0.0 and (is_on_floor() or _air_dash):
 			_dash_t = DASH_TIME
 			_dash_dir = facing
+			Sound.play("dash")
 			_dash_cd = DASH_COOLDOWN
 			_iframes = maxf(_iframes, DASH_TIME)
 			if not is_on_floor():
@@ -98,7 +101,11 @@ func _physics_process(delta: float) -> void:
 
 	# lasers (camada 5) só deixam passar durante o dash
 	collision_mask = 1 if _dash_t > 0.0 else 1 | 16
+	var was_airborne := not is_on_floor()
+	var falling := velocity.y
 	move_and_slide()
+	if was_airborne and is_on_floor() and falling > 120.0:
+		Sound.play("land")
 	_check_contact_damage()
 	queue_redraw()
 
@@ -110,6 +117,7 @@ func _shoot() -> void:
 		aim = Vector2(0, -1) if Input.get_axis("left", "right") == 0.0 else Vector2(facing, -1).normalized()
 	var b := Bullet.new()
 	b.setup(aim, true)
+	Sound.play("shoot", 1.0, 0.06)
 	if get_parent().sniffing:
 		b.damage = 2  # o faro mostra o ponto fraco: tiro dobrado
 	b.global_position = global_position + Vector2(facing * 8, 1) + aim * 4
@@ -126,8 +134,35 @@ func _update_sniff(delta: float) -> void:
 	stage.set_sniffing(Input.is_action_pressed("sniff") and can and hp > 0)
 	if stage.sniffing:
 		sniff_energy = maxf(sniff_energy - SNIFF_DRAIN * real, 0.0)
+		_scent_t -= real
+		if _scent_t <= 0.0:
+			_play_scent()
 	else:
 		sniff_energy = minf(sniff_energy + SNIFF_REGEN * real, 100.0)
+
+
+## O cheiro mais próximo soa com o seu timbre: mais rápido e agudo quanto mais perto.
+func _play_scent() -> void:
+	var stage := get_parent()
+	var kind := ""
+	var nearest := INF
+	for e in get_tree().get_nodes_in_group("enemy"):
+		var d := global_position.distance_to(e.global_position)
+		if d < nearest:
+			nearest = d
+			kind = e.sound_kind
+	for secret in stage.fake_walls + stage.chips:
+		var d := global_position.distance_to(secret)
+		# segredo tem preferência sobre bug à mesma distância
+		if d * 0.7 < nearest:
+			nearest = d * 0.7
+			kind = "secret"
+	if kind == "":
+		_scent_t = 0.3
+		return
+	var near := clampf(1.0 - nearest / 280.0, 0.0, 1.0)
+	_scent_t = lerpf(0.75, 0.2, near)
+	Sound.play("scent_" + kind, lerpf(0.8, 1.4, near))
 
 
 func heal(amount: int) -> void:
@@ -161,6 +196,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	var main := get_parent()
 	main.add_shake(4.0)
 	main.hitstop(0.06)
+	Sound.play("death" if hp <= 0 else "hurt")
 	if hp <= 0:
 		main.show_banner("TELA AZUL\n\nUm erro fatal ocorreu no hound.exe.\nR ou Start volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
 		set_physics_process(false)

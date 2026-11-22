@@ -8,6 +8,10 @@ const FIRE_EVERY := 1.6
 var _cooldown := 1.0
 
 
+func _init() -> void:
+	sound_kind = "turret"
+
+
 func _ready() -> void:
 	super()
 	hp = 4
@@ -25,6 +29,7 @@ func _physics_process(delta: float) -> void:
 		_cooldown = FIRE_EVERY
 		var b := Bullet.new()
 		b.setup(to.normalized(), false)
+		Sound.play("turret_fire", 1.0, 0.05)
 		b.global_position = global_position + to.normalized() * 8.0
 		get_parent().add_child(b)
 

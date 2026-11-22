@@ -113,6 +113,7 @@ func _ready() -> void:
 		show_toast("ARQUIVO FANTASMA\nFareje para torná-lo sólido, ou espere ele bater.", 3.0)
 	else:
 		show_toast(data.name)
+	Sound.music("boss" if boss != null else "desktop")
 	Game.save_game()  # depois dos avisos, para uma falha de gravação aparecer
 
 
@@ -245,6 +246,7 @@ func stage_process(_delta: float) -> void:
 			Game.taken[_key(p)] = true
 			player.heal(1)
 			show_toast("+1 VIDA")
+			Sound.play("pickup")
 			Game.save_game()
 
 	for c in chips.duplicate():
@@ -253,6 +255,7 @@ func stage_process(_delta: float) -> void:
 			Game.taken[_key(c)] = true
 			Game.abilities.dash = true
 			add_shake(4.0)
+			Sound.play("chip")
 			show_toast("DASH INSTALADO · K / C / B\natravessa lasers e tiros", 3.5)
 			Game.save_game()
 
@@ -262,6 +265,7 @@ func stage_process(_delta: float) -> void:
 		Game.restore = {"room": Game.room, "pos": restore_pos}
 		if fresh:
 			show_toast("PONTO DE RESTAURAÇÃO CRIADO")
+			Sound.play("restore")
 			Game.save_game()
 
 	if door_pos != Vector2.ZERO and pp.distance_to(door_pos) < 12.0 and player.hp > 0:
@@ -274,12 +278,14 @@ func stage_process(_delta: float) -> void:
 			Game.hp = player.hp
 			set_sniffing(false)
 			Game.boss_return = {"room": Game.room, "pos": door_pos - Vector2(24, 0)}
+			Sound.play("door")
 			Game.enter("ghost")
 			return
 		else:
 			_leaving = true
 			Game.hp = player.hp
 			set_sniffing(false)
+			Sound.play("door")
 			Game.enter_arena(Game.room, door_pos - Vector2(24, 0))
 			return
 	elif door_pos != Vector2.ZERO and pp.distance_to(door_pos) > 40.0:
@@ -291,6 +297,7 @@ func stage_process(_delta: float) -> void:
 
 	if exit_pos != Vector2.ZERO and Game.taken.has("boss_desktop") and player.hp > 0 and pp.distance_to(exit_pos) < 10.0:
 		_leaving = true
+		Sound.play("door")
 		Game.hp = player.hp
 		set_sniffing(false)
 		if Game.boss_return.is_empty():
@@ -299,11 +306,25 @@ func stage_process(_delta: float) -> void:
 			Game.enter(Game.boss_return.room, Game.boss_return.pos)
 		return
 
+	_update_tension(pp)
 	_check_exit(pp)
 	hud.text = "VIDA %d/%d   FARO %d%%" % [maxi(player.hp, 0), player.MAX_HP, int(player.sniff_energy)]
 
 
+## A camada extra da música: bug por perto ou, no chefe, a segunda fase.
+func _update_tension(pp: Vector2) -> void:
+	if is_instance_valid(boss):
+		Sound.tension = 1.0 if boss.second_phase() else 0.0
+		return
+	var nearest := INF
+	for e in get_tree().get_nodes_in_group("enemy"):
+		nearest = minf(nearest, pp.distance_to(e.global_position))
+	Sound.tension = clampf((200.0 - nearest) / 120.0, 0.0, 1.0)
+
+
 func _on_boss_defeated() -> void:
+	Sound.music("")
+	Sound.play("victory")
 	Game.taken["boss_desktop"] = true
 	for c in get_children():
 		if c is Bullet and not c.friendly:

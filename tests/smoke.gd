@@ -171,6 +171,7 @@ func _run() -> void:
 		print("%-36s %s" % [k, "ok" if checks[k] else "FALHOU"])
 	var ok := checks.values().all(func(v): return v)
 	print("SMOKE ", "OK" if ok else "FALHOU")
+	await root.get_node("Sound").shutdown()
 	quit(0 if ok else 1)
 
 

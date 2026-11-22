@@ -19,7 +19,12 @@ var restore := {}               # {"room": String, "pos": Vector2}
 var visited := {}
 var taken := {}                 # itens e eventos que não voltam ("room:x:y", "arena_desktop")
 var arena_return := {}          # para onde a sala de cima devolve o cão
+var _quitting := false
 var boss_return := {}           # para onde a saída do chefe devolve o cão
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS  # fechar a janela vale também na pausa
 
 
 func new_game() -> void:
@@ -70,7 +75,17 @@ func to_title() -> void:
 
 
 func quit() -> void:
+	if _quitting:
+		return
+	_quitting = true
+	await Sound.shutdown()
 	get_tree().quit()
+
+
+func _notification(what: int) -> void:
+	# o título desliga o fechamento automático para passar por quit()
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and not get_tree().auto_accept_quit:
+		quit()
 
 
 ## Troca de sala (ou de cena) no fim do quadro, para não quebrar a física.

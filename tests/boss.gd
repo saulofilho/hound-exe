@@ -131,4 +131,5 @@ func _run() -> void:
 			elif style in ["desvia", "pula", "faro"]:
 				_expect("  luta vencivel", r.won)
 	print("BOSS ", "OK" if failures == 0 else "FALHOU (%d)" % failures)
+	await root.get_node("Sound").shutdown()
 	quit(0 if failures == 0 else 1)

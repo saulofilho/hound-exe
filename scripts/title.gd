@@ -6,7 +6,7 @@ const ACCENT := Color(0.18, 0.71, 0.66)
 
 var menu: GameMenu
 var message: Label
-var _confirming := false
+var _in_submenu := false
 var _starting := false
 
 
@@ -17,11 +17,15 @@ func _ready() -> void:
 	size = Vector2(384, 216)
 	if Game.save_path == "":  # os testes definem um caminho próprio antes
 		Game.save_path = SaveFile.PATH
+	get_tree().auto_accept_quit = false
+	Sound.load_settings()
+	Sound.muffled = false
+	Sound.music("title")
 
 	_label("HOUND.EXE", Vector2(0, 20), 34, Color.WHITE)
 	message = _label("", Vector2(0, 98), 9, ACCENT)
 	menu = GameMenu.new()
-	menu.position = Vector2((384 - GameMenu.WIDTH) / 2.0, 130)
+	menu.position = Vector2((384 - GameMenu.WIDTH) / 2.0, 114)
 	add_child(menu)
 	_label("setas ou W/S escolhem · Enter ou A confirma", Vector2(0, 198), 8, Color(1, 1, 1, 0.5))
 	show_main()
@@ -40,7 +44,7 @@ func _label(text: String, at: Vector2, font_size: int, color: Color) -> Label:
 
 
 func show_main() -> void:
-	_confirming = false
+	_in_submenu = false
 	var saved := SaveFile.read(Game.save_path)
 	var options := []
 	if not saved.is_empty():
@@ -54,8 +58,15 @@ func show_main() -> void:
 	else:
 		message.text = ""
 	options.append(["NOVO JOGO", _ask_new_game])
+	options.append(["SOM", _show_sound])
 	options.append(["SAIR", Game.quit])
 	menu.show_options(options)
+
+
+func _show_sound() -> void:
+	_in_submenu = true
+	message.text = "Esquerda e direita ajustam o volume."
+	menu.show_sound_options(show_main)
 
 
 func _continue() -> void:
@@ -72,7 +83,7 @@ func _ask_new_game() -> void:
 	if not SaveFile.exists(Game.save_path):
 		_start_new()
 		return
-	_confirming = true
+	_in_submenu = true
 	message.text = "Começar de novo substitui o progresso salvo."
 	# o foco começa na opção que não perde nada
 	menu.show_options([["CANCELAR", show_main], ["APAGAR E COMEÇAR", _start_new]])
@@ -87,7 +98,7 @@ func _start_new() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if _confirming and event.is_action_pressed("ui_cancel"):
+	if _in_submenu and event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
 		show_main()
 

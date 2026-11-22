@@ -28,6 +28,10 @@ var _shot_t := 0.0
 var _player: Node2D
 
 
+func _init() -> void:
+	sound_kind = "ghost"
+
+
 func _ready() -> void:
 	hp = MAX_HP_BOSS
 	contact_radius = 0.0
@@ -74,10 +78,12 @@ func _physics_process(delta: float) -> void:
 			position = position.move_toward(start, 320.0 * delta)
 			if position.is_equal_approx(start):
 				state = State.AIM
+				Sound.play("ghost_warn")
 				_left = 0.65 if second_phase() else 0.85
 		State.AIM:
 			if _left <= 0.0:
 				state = State.CHARGE
+				Sound.play("ghost_charge")
 				contact_radius = CONTACT
 		State.CHARGE:
 			var speed := 270.0 if second_phase() else 225.0
@@ -118,10 +124,12 @@ func _stun() -> void:
 	contact_radius = 0.0
 	_left = 1.8 if second_phase() else 2.2
 	get_parent().add_shake(6.0)
+	Sound.play("ghost_stun")
 
 
 func _fire() -> void:
 	_shot_t = 1.0
+	Sound.play("ghost_fire")
 	var aim := (_player.global_position - global_position).normalized()
 	var angles := [-0.35, 0.0, 0.35] if second_phase() else [0.0]
 	for a in angles:
@@ -137,6 +145,7 @@ func hit(amount: int, _dir: Vector2) -> void:
 	var was_second := second_phase()
 	hp = maxi(hp - amount, 0)
 	_flash = 0.06
+	Sound.play("ghost_die" if hp == 0 else "ghost_hit", 1.0, 0.08)
 	var main := get_parent()
 	main.add_shake(2.5 if amount > 1 else 1.5)
 	if hp == 0:
@@ -147,6 +156,7 @@ func hit(amount: int, _dir: Vector2) -> void:
 		queue_free()
 	elif second_phase() and not was_second:
 		main.add_shake(6.0)
+		Sound.play("ghost_phase")
 		main.show_toast("O arquivo criou cópias. Fareje o original.", 3.0)
 
 

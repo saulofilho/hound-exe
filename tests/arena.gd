@@ -56,4 +56,5 @@ func _run() -> void:
 		wins += int(won)
 		print("arena semente %-3d %s vida=%d faltavam=%ds" % [game_seed, "VENCEU" if won else "perdeu", h.hp, ceili(s.time_left)])
 	print("ARENA ", "OK" if wins > 0 else "FALHOU", " (%d de 10)" % wins)
+	await root.get_node("Sound").shutdown()
 	quit(0 if wins > 0 else 1)

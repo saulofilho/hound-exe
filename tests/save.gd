@@ -98,7 +98,7 @@ func _child(step: String) -> void:
 
 
 func _clean() -> void:
-	for p in [PATH, PATH + ".bak", PATH + ".tmp", MARK]:
+	for p in [PATH, PATH + ".bak", PATH + ".tmp", PATH.get_basename() + ".settings.json", MARK]:
 		if FileAccess.file_exists(p):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(p))
 
@@ -173,6 +173,7 @@ func _parent() -> void:
 
 	_clean()
 	print("SAVE ", "OK" if failures == 0 else "FALHOU (%d)" % failures)
+	await root.get_node("Sound").shutdown()
 	quit(0 if failures == 0 else 1)
 
 
@@ -281,9 +282,11 @@ func _child_resume() -> void:
 	await _key(KEY_ESCAPE)
 	await _key(KEY_S)
 	await _key(KEY_S)
+	await _key(KEY_S)
 	await _key(KEY_ENTER)
 	await _frames(10)
 	_check("pausa: tela de titulo", current_scene.name == "Title" and not paused and _focused() == "CONTINUAR")
+	await root.get_node("Sound").shutdown()
 	quit(0 if failures == 0 else 1)
 
 
@@ -322,9 +325,13 @@ func _child_finish() -> void:
 	await _key(KEY_UP)
 	_check("SAIR selecionado", _focused() == "SAIR")
 	if failures > 0:
+		await root.get_node("Sound").shutdown()
 		quit(1)
 		return
 	await _key(KEY_ENTER)
-	await _frames(30)
+	var until := Time.get_ticks_msec() + 3000
+	while Time.get_ticks_msec() < until:
+		await process_frame
 	print("SAIR nao fechou o jogo FALHOU")
+	await root.get_node("Sound").shutdown()
 	quit(1)

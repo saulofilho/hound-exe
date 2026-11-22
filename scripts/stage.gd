@@ -20,6 +20,7 @@ func _ready() -> void:
 	_setup_input()
 	RenderingServer.set_default_clear_color(Color.BLACK)
 	Engine.time_scale = 1.0
+	Sound.muffled = false
 	camera = Camera2D.new()
 	add_child(camera)
 	_build_level()
@@ -76,6 +77,8 @@ func set_sniffing(on: bool) -> void:
 	if on == sniffing:
 		return
 	sniffing = on
+	if on:
+		Sound.play("sniff")
 	Engine.time_scale = base_time_scale()
 	queue_redraw()
 
@@ -110,6 +113,7 @@ func _process(delta: float) -> void:
 		set_process(false)
 		return
 	stage_process(delta)
+	Sound.muffled = sniffing or hero_dead()
 	var real := delta / maxf(Engine.time_scale, 0.05)
 	_toast_t = maxf(_toast_t - real, 0.0)
 	toast.visible = _toast_t > 0.0

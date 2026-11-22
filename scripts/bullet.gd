@@ -41,6 +41,8 @@ func _on_body(body: Node) -> void:
 		body.hit(damage, dir)
 	elif not friendly and body.is_in_group("player"):
 		body.take_damage(1, global_position)
+	else:
+		Sound.play("spark", 1.0, 0.15)
 	_spark()
 	queue_free()
 

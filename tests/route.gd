@@ -158,4 +158,5 @@ func _run() -> void:
 	_expect("porta da sala de cima", current_scene.name == "Arena")
 
 	print("ROUTE ", "OK" if failures == 0 else "FALHOU (%d)" % failures)
+	await root.get_node("Sound").shutdown()
 	quit(0 if failures == 0 else 1)

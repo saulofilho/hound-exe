@@ -64,6 +64,7 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.move_toward(move * SPEED, ACCEL * delta)
 		if Input.is_action_just_pressed("dash") and _dash_cd == 0.0:
 			_dash_t = DASH_TIME
+			Sound.play("dash")
 			_dash_cd = DASH_COOLDOWN
 			_iframes = maxf(_iframes, DASH_TIME)
 
@@ -71,6 +72,7 @@ func _physics_process(delta: float) -> void:
 		_fire_cd = FIRE_RATE
 		var b := Bullet.new()
 		b.setup(aim, true)
+		Sound.play("shoot", 1.0, 0.06)
 		b.global_position = global_position + aim * 9.0
 		get_parent().add_child(b)
 		get_parent().add_shake(0.8)
@@ -91,6 +93,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	var stage := get_parent()
 	stage.add_shake(4.0)
 	stage.hitstop(0.06)
+	Sound.play("death" if hp <= 0 else "hurt")
 	if hp <= 0:
 		stage.show_banner("TELA AZUL\n\nO processo hound.exe parou de responder.\nR ou Start volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
 		set_physics_process(false)

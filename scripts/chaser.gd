@@ -5,6 +5,10 @@ extends Enemy
 var speed := 40.0
 
 
+func _init() -> void:
+	sound_kind = "chaser"
+
+
 func _ready() -> void:
 	super()
 	hp = 2

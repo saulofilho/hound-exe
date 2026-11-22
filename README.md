@@ -121,13 +121,20 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] Region boss: *o Arquivo Fantasma* (placeholder art)
 - [ ] Windows 95 HUD and pixel fonts
 - [ ] Final 1-bit sprites and tiles
-- [ ] Sound effects and music
+- [x] Sound effects and music (original chiptune, volume settings)
 - [x] Title screen, pause menu, save to disk
 
 ## Running the prototype
 
 1. Install Godot 4.3 or newer (`brew install --cask godot` on macOS).
-2. Run the game:
+2. Import the project once after cloning (the game will not start without
+   this):
+
+   ```bash
+   godot --headless --path . --import
+   ```
+
+3. Run the game:
 
    ```bash
    godot --path .
@@ -156,6 +163,10 @@ godot --headless --path . -s tests/smoke.gd
 
 # start to top-down room door with inputs only (bugs removed), plus laser distances
 godot --headless --path . -s tests/route.gd
+
+# audio: every event, saved volumes and the recorded mixer output
+# (about 80 seconds; needs real time, so no --fixed-fps)
+godot --headless --path . -s tests/audio.gd
 
 # save, title and pause across real processes, including a forced kill
 # (uses its own user://test_* files)
@@ -189,6 +200,24 @@ when the main file is missing or unreadable. Only the title screen turns saving
 on: opening `main.tscn` directly (F6 in the editor), tests and tools never
 write to your save.
 
+## Sound
+
+All audio is original and synthesized by
+[`tools/make_audio.py`](tools/make_audio.py); the scores are plain text in
+that file. After editing it:
+
+```bash
+python3 tools/make_audio.py
+godot --headless --path . --import
+```
+
+- **Music:** title, Desktop, top-down room and boss. The Desktop track gains a
+  tension layer as bugs get close; the boss gains one in its second phase.
+- **Sniffing:** muffles the music and pings the nearest scent, faster and
+  higher as you get closer. Each scent and each bug has its own timbre.
+- **Volume:** SOM in the title and pause menus, stored next to the save in
+  `save.settings.json`.
+
 ## Project layout
 
 ```
@@ -202,6 +231,7 @@ scripts/
 ├── title.gd      title screen; turns saving on
 ├── pause_menu.gd pause menu
 ├── menu.gd       option list for keyboard, gamepad and mouse
+├── sound.gd      autoload "Sound": effects, layered music, volume
 ├── rooms.gd      the Desktop region's rooms as ASCII maps, and how they link
 ├── stage.gd      shared base: controls, screen shake, hitstop, HUD, toasts
 ├── main.gd       room builder: exits, items, laser, restore point, door, Explorer
@@ -214,7 +244,9 @@ scripts/
 ├── walker.gd     patrolling bug
 ├── turret.gd     shooting bug
 └── chaser.gd     swarming bug (top-down room)
-tests/            smoke, route, arena, boss and save tests
+tests/            smoke, route, arena, boss, save and audio tests
+audio/            generated WAV files
+tools/make_audio.py  synthesizer and scores
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images
 ```

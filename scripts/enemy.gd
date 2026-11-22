@@ -7,6 +7,7 @@ const BUG_COLOR := Color(1.0, 0.42, 0.24)  # cor de destaque provisória
 
 var hp := 3
 var contact_radius := 13.0    # 0 = não machuca ao encostar
+var sound_kind := ""          # prefixo dos sons deste bug
 var _flash := 0.0
 var _knock := Vector2.ZERO
 
@@ -29,6 +30,7 @@ func hit(amount: int, dir: Vector2) -> void:
 	_knock = dir * 60.0
 	var main := get_parent()
 	main.add_shake(3.0 if amount > 1 else 2.0)
+	Sound.play(sound_kind + ("_die" if hp <= 0 else "_hit"), 1.0, 0.08)
 	if hp <= 0:
 		main.add_shake(5.0)
 		main.hitstop(0.05)

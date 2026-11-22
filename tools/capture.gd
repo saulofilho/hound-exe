@@ -86,6 +86,7 @@ func _run() -> void:
 	for action in ["shoot", "right", "down", "left", "up"]:
 		Input.action_release(action)
 	await _boss()
+	await root.get_node("Sound").shutdown()
 	quit()
 
 

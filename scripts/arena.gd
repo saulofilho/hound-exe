@@ -54,6 +54,7 @@ func _build_level() -> void:
 			elif row[x] == "s":
 				spawns.append(at)
 			x += 1
+	Sound.music("arena")
 	# a sala inteira cabe na tela: câmera fixa no centro
 	camera.position = Vector2(MAP[0].length(), MAP.size()) * TILE / 2.0
 
@@ -98,6 +99,8 @@ func stage_process(delta: float) -> void:
 			b.queue_free()
 		add_shake(6.0)
 		show_banner("PROCESSO CONCLUÍDO", ACCENT)
+		Sound.music("")
+		Sound.play("victory")
 		Game.taken["arena_desktop"] = true
 		Game.hp = hound.hp
 		Game.save_game()
@@ -111,6 +114,7 @@ func stage_process(delta: float) -> void:
 
 func _spawn_wave() -> void:
 	_wave += 1
+	Sound.play("wave")
 	_wave_t = 4.0
 	var alive := get_tree().get_nodes_in_group("enemy").size()
 	var count := mini(1 + _wave, MAX_BUGS - alive)

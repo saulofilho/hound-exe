@@ -8,6 +8,10 @@ const GRAVITY := 900.0
 var dir := -1
 
 
+func _init() -> void:
+	sound_kind = "walker"
+
+
 func _physics_process(delta: float) -> void:
 	tick(delta)
 	var main := get_parent()

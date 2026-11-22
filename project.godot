@@ -22,3 +22,4 @@ textures/canvas_textures/default_texture_filter=0
 [autoload]
 
 Game="*res://scripts/game.gd"
+Sound="*res://scripts/sound.gd"
