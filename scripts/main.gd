@@ -24,7 +24,7 @@ var _boss_bar: ColorRect
 
 
 func help_text() -> String:
-	return "A/D mover · Espaço pular · J atirar · K dash · Shift farejar · Tab Explorer · R restaurar"
+	return "A/D mover · Espaço pular · J atirar · K dash · Shift farejar · Tab Explorer · Esc pausa"
 
 
 func _key(pos: Vector2) -> String:
@@ -113,6 +113,11 @@ func _ready() -> void:
 		show_toast("ARQUIVO FANTASMA\nFareje para torná-lo sólido, ou espere ele bater.", 3.0)
 	else:
 		show_toast(data.name)
+	Game.save_game()  # depois dos avisos, para uma falha de gravação aparecer
+
+
+func hero_dead() -> bool:
+	return is_instance_valid(player) and player.hp <= 0
 
 
 func _spawn(e: Node2D, at: Vector2) -> void:
@@ -240,6 +245,7 @@ func stage_process(_delta: float) -> void:
 			Game.taken[_key(p)] = true
 			player.heal(1)
 			show_toast("+1 VIDA")
+			Game.save_game()
 
 	for c in chips.duplicate():
 		if pp.distance_to(c) < 12.0:
@@ -248,6 +254,7 @@ func stage_process(_delta: float) -> void:
 			Game.abilities.dash = true
 			add_shake(4.0)
 			show_toast("DASH INSTALADO · K / C / B\natravessa lasers e tiros", 3.5)
+			Game.save_game()
 
 	if restore_pos != Vector2.ZERO and pp.distance_to(restore_pos) < 12.0 and player.hp > 0:
 		var fresh: bool = Game.restore.get("room", "") != Game.room
@@ -255,6 +262,7 @@ func stage_process(_delta: float) -> void:
 		Game.restore = {"room": Game.room, "pos": restore_pos}
 		if fresh:
 			show_toast("PONTO DE RESTAURAÇÃO CRIADO")
+			Game.save_game()
 
 	if door_pos != Vector2.ZERO and pp.distance_to(door_pos) < 12.0 and player.hp > 0:
 		if Game.taken.has("boss_desktop"):
@@ -302,6 +310,7 @@ func _on_boss_defeated() -> void:
 			c.queue_free()
 	player.hp = player.MAX_HP
 	show_toast("ARQUIVO FANTASMA EXCLUÍDO\nregião limpa, saída aberta", 4.0)
+	Game.save_game()
 	queue_redraw()
 
 

@@ -162,7 +162,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	main.add_shake(4.0)
 	main.hitstop(0.06)
 	if hp <= 0:
-		main.show_banner("TELA AZUL\n\nUm erro fatal ocorreu no hound.exe.\nR volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
+		main.show_banner("TELA AZUL\n\nUm erro fatal ocorreu no hound.exe.\nR ou Start volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
 		set_physics_process(false)
 		visible = false
 

@@ -13,6 +13,7 @@ var toast: Label
 var _toast_t := 0.0
 var sniffing := false
 var _shake := 0.0
+var pause_menu: PauseMenu
 
 
 func _ready() -> void:
@@ -23,6 +24,10 @@ func _ready() -> void:
 	add_child(camera)
 	_build_level()
 	_build_hud(help_text())
+	pause_menu = PauseMenu.new()
+	pause_menu.stage = self
+	add_child(pause_menu)
+	Game.save_failed.connect(_on_save_failed)
 
 
 # ---- para as subclasses
@@ -37,6 +42,14 @@ func help_text() -> String:
 
 func stage_process(_delta: float) -> void:
 	pass
+
+
+func hero_dead() -> bool:
+	return false
+
+
+func _on_save_failed() -> void:
+	show_toast("NÃO FOI POSSÍVEL SALVAR O PROGRESSO", 5.0)
 
 
 ## Parede sólida de `width` blocos a partir da célula (cx, cy).
@@ -140,9 +153,9 @@ func _setup_input() -> void:
 		"left": [KEY_A, KEY_LEFT], "right": [KEY_D, KEY_RIGHT],
 		"up": [KEY_W, KEY_UP], "down": [KEY_S, KEY_DOWN],
 		"jump": [KEY_SPACE, KEY_Z], "shoot": [KEY_J, KEY_X],
-		"dash": [KEY_K, KEY_C], "sniff": [KEY_SHIFT, KEY_L], "restart": [KEY_R], "map": [KEY_TAB],
+		"dash": [KEY_K, KEY_C], "sniff": [KEY_SHIFT, KEY_L], "restart": [KEY_R], "map": [KEY_TAB], "pause": [KEY_ESCAPE],
 	}
-	var pad_buttons := {"jump": JOY_BUTTON_A, "shoot": JOY_BUTTON_X, "dash": JOY_BUTTON_B, "restart": JOY_BUTTON_START, "map": JOY_BUTTON_BACK}
+	var pad_buttons := {"jump": JOY_BUTTON_A, "shoot": JOY_BUTTON_X, "dash": JOY_BUTTON_B, "pause": JOY_BUTTON_START, "map": JOY_BUTTON_BACK}
 	var pad_axes := {
 		"left": [JOY_AXIS_LEFT_X, -1.0], "right": [JOY_AXIS_LEFT_X, 1.0],
 		"up": [JOY_AXIS_LEFT_Y, -1.0], "down": [JOY_AXIS_LEFT_Y, 1.0],

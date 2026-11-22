@@ -92,7 +92,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	stage.add_shake(4.0)
 	stage.hitstop(0.06)
 	if hp <= 0:
-		stage.show_banner("TELA AZUL\n\nO processo hound.exe parou de responder.\nR volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
+		stage.show_banner("TELA AZUL\n\nO processo hound.exe parou de responder.\nR ou Start volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
 		set_physics_process(false)
 		visible = false
 

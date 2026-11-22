@@ -1,9 +1,11 @@
-; Hound.exe · protótipo da fase 0 (Godot 4.3+)
+; Hound.exe · fase 1 (Godot 4.3+)
 config_version=5
 
 [application]
 config/name="Hound.exe (protótipo)"
-run/main_scene="res://main.tscn"
+run/main_scene="res://title.tscn"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="HoundExe"
 config/features=PackedStringArray("4.3")
 
 [display]

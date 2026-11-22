@@ -26,6 +26,9 @@ bugs, mira com mouse ou analógico direito). Detalhes atualizados no
 **Fase 1 em andamento:** a região Área de trabalho já tem salas ligadas, chip
 de dash e o chefe, o Arquivo Fantasma. A arte ainda é provisória.
 
+O jogo abre na tela de título, salva sozinho e pausa com Esc (ou Start).
+Ao continuar, o cão volta ao último ponto de restauração.
+
 ### Como rodar
 
 1. Instale o Godot 4.3 ou mais novo: `brew install --cask godot`
@@ -39,7 +42,8 @@ de dash e o chefe, o Arquivo Fantasma. A arte ainda é provisória.
 | Pular | Espaço ou Z | A |
 | Atirar (segurar) | J ou X | X |
 | Dash | K ou C | B |
-| Reiniciar | R | Start |
+| Pausar | Esc | Start |
+| Voltar ao ponto de restauração | R | menu de pausa |
 
 ### Estrutura
 

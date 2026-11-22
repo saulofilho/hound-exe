@@ -32,7 +32,7 @@ var _over := false
 
 
 func help_text() -> String:
-	return "mover WASD · mirar mouse ou analógico direito · atirar J/clique · dash K · R reinicia"
+	return "mover WASD · mirar mouse ou analógico direito · atirar J/clique · dash K · Esc pausa"
 
 
 func _build_level() -> void:
@@ -72,6 +72,10 @@ func _draw() -> void:
 		draw_rect(Rect2(s - Vector2(4, 4), Vector2(8, 8)), Enemy.BUG_COLOR, false, 1.0)
 
 
+func hero_dead() -> bool:
+	return is_instance_valid(hound) and hound.hp <= 0
+
+
 func stage_process(delta: float) -> void:
 	if _over or not is_instance_valid(hound):
 		return
@@ -96,7 +100,9 @@ func stage_process(delta: float) -> void:
 		show_banner("PROCESSO CONCLUÍDO", ACCENT)
 		Game.taken["arena_desktop"] = true
 		Game.hp = hound.hp
-		await get_tree().create_timer(2.0, true, false, true).timeout
+		Game.save_game()
+		# process_always = false: a volta à região espera se o jogo estiver pausado
+		await get_tree().create_timer(2.0, false, false, true).timeout
 		if Game.arena_return.is_empty():
 			Game.enter(Game.START_ROOM)
 		else:

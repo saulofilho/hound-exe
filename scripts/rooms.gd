@@ -117,3 +117,13 @@ const DATA := {
 		],
 	},
 }
+
+
+## Centro do ponto de restauração da sala, ou Vector2.ZERO se não houver.
+static func restore_point(id: String) -> Vector2:
+	var rows: Array = DATA[id].map
+	for y in rows.size():
+		var x: int = rows[y].find("R")
+		if x >= 0:
+			return Vector2(x * 16 + 8, y * 16 + 8)
+	return Vector2.ZERO

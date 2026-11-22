@@ -122,7 +122,7 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [ ] Windows 95 HUD and pixel fonts
 - [ ] Final 1-bit sprites and tiles
 - [ ] Sound effects and music
-- [ ] Title screen, pause menu, save to disk
+- [x] Title screen, pause menu, save to disk
 
 ## Running the prototype
 
@@ -145,7 +145,8 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 | Sniff (hold) | Shift or L | left trigger |
 | Explorer map | Tab | Back |
 | Aim in the top-down room | mouse | right stick |
-| Back to restore point | R | Start |
+| Pause | Esc | Start |
+| Back to restore point | R (or the pause menu) | pause menu; Start on the blue screen |
 
 ### Tests and tools
 
@@ -155,6 +156,10 @@ godot --headless --path . -s tests/smoke.gd
 
 # start to top-down room door with inputs only (bugs removed), plus laser distances
 godot --headless --path . -s tests/route.gd
+
+# save, title and pause across real processes, including a forced kill
+# (uses its own user://test_* files)
+godot --headless --fixed-fps 60 --path . -s tests/save.gd
 
 # the full 45 seconds of the top-down room, inputs only, 10 seeds
 godot --headless --fixed-fps 60 --path . -s tests/arena.gd
@@ -166,14 +171,37 @@ godot --headless --fixed-fps 60 --path . -s tests/boss.gd
 godot --path . -s tools/capture.gd
 ```
 
+## Saving
+
+The game saves by itself on entering a room, creating a restore point, picking
+up an item, clearing the top-down room and beating the boss. Continuing works
+like dying: you keep your progress and wake at the last restore point with full
+health.
+
+| System | Save folder |
+|---|---|
+| macOS | `~/Library/Application Support/HoundExe/` |
+| Windows | `%APPDATA%\HoundExe\` |
+| Linux | `~/.local/share/HoundExe/` |
+
+`save.json` is the current save and `save.json.bak` the one before it, used
+when the main file is missing or unreadable. Only the title screen turns saving
+on: opening `main.tscn` directly (F6 in the editor), tests and tools never
+write to your save.
+
 ## Project layout
 
 ```
 project.godot     settings (384×216, integer scaling, crisp pixels)
+title.tscn        title screen (the game starts here)
 main.tscn         side-view room (builds whichever room is current)
 arena.tscn        top-down room
 scripts/
 ├── game.gd       autoload "Game": current room, health, abilities, restore point
+├── save_file.gd  validated JSON save with a backup
+├── title.gd      title screen; turns saving on
+├── pause_menu.gd pause menu
+├── menu.gd       option list for keyboard, gamepad and mouse
 ├── rooms.gd      the Desktop region's rooms as ASCII maps, and how they link
 ├── stage.gd      shared base: controls, screen shake, hitstop, HUD, toasts
 ├── main.gd       room builder: exits, items, laser, restore point, door, Explorer
@@ -186,7 +214,7 @@ scripts/
 ├── walker.gd     patrolling bug
 ├── turret.gd     shooting bug
 └── chaser.gd     swarming bug (top-down room)
-tests/            smoke, route, arena and boss tests
+tests/            smoke, route, arena, boss and save tests
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images
 ```
