@@ -274,6 +274,30 @@ def chaser(step: int) -> Image:
     return im
 
 
+def spam(step: int) -> Image:
+    """Spam: envelope com asas; no terceiro quadro, mergulha de olho aceso."""
+    im = Image(16, 16)
+    im.rect(3, 5, 10, 8)
+    im.line(3, 5, 7, 9, BLACK)
+    im.line(12, 5, 8, 9, BLACK)
+    eye = ACCENT if step == 2 else BLACK
+    im.set(5, 10, eye)
+    im.set(10, 10, eye)
+    if step == 0:
+        im.line(2, 6, 0, 3)
+        im.line(13, 6, 15, 3)
+        im.line(2, 7, 1, 4)
+        im.line(13, 7, 14, 4)
+    elif step == 1:
+        im.line(2, 7, 0, 10)
+        im.line(13, 7, 15, 10)
+    else:
+        im.line(2, 5, 1, 0)
+        im.line(13, 5, 14, 0)
+        im.rect(6, 11, 4, 1, ACCENT)
+    return im
+
+
 def ghost(kind: str) -> Image:
     """Arquivo Fantasma, 32x36: solid, hidden, charge, stun, hit."""
     im = Image(32, 36)
@@ -341,6 +365,33 @@ def item(kind: str) -> Image:
         im.rect(10, 3, 1, 1)
         im.rect(7, 6, 2, 6, ACCENT)
         im.rect(5, 8, 6, 2, ACCENT)
+    elif kind in ("folder", "folder_shut"):
+        im.rect(1, 4, 14, 12)
+        im.rect(1, 2, 6, 2)
+        im.rect(3, 7, 10, 7, BLACK)
+        if kind == "folder":
+            im.art(5, 8, ["..**..", "..**..", "******", ".****.", "..**.."])
+        else:
+            im.rect(5, 10, 6, 2)
+    elif kind == "clue":
+        im.art(1, 1, [
+            "...####.......",
+            ".##....##.....",
+            ".#..**..#.....",
+            "#..****..#....",
+            "#..****..#....",
+            ".#..**..#.....",
+            ".##....###....",
+            "...####..###..",
+            "..........###.",
+            "...........##.",
+        ])
+    elif kind == "secret":
+        im.rect(2, 2, 12, 12)
+        im.rect(5, 2, 6, 5, BLACK)
+        im.rect(8, 3, 2, 3)
+        im.rect(4, 9, 8, 5, ACCENT)
+        im.rect(13, 2, 1, 1, CLEAR)
     elif kind in ("door", "door_clear", "door_locked"):
         im.box(1, 0, 14, 16)
         im.rect(2, 1, 12, 14, BLACK)
@@ -422,9 +473,11 @@ SHEETS = {
     "top_hound": lambda: [top_hound(i) for i in range(4)],
     "walker": lambda: [walker(i) for i in range(4)],
     "turret": lambda: [turret(False), turret(True)],
+    "spam": lambda: [spam(i) for i in range(3)],
     "chaser": lambda: [chaser(0), chaser(1)],
     "ghost": lambda: [ghost(k) for k in ("solid", "hidden", "charge", "stun", "hit")],
-    "items": lambda: [item(k) for k in ("restore_off", "restore_on", "chip", "patch", "door", "door_clear", "door_locked")],
+    "items": lambda: [item(k) for k in ("restore_off", "restore_on", "chip", "patch", "door", "door_clear", "door_locked",
+                                     "folder", "folder_shut", "clue", "secret")],
     "laser": lambda: [laser(i) for i in range(3)],
     "icons": lambda: [icon(k) for k in ("folder", "page", "drive", "download", "bin", "computer")],
     "logo": lambda: [logo()],

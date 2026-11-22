@@ -9,6 +9,8 @@ signal save_failed
 
 const MAX_HP := 5
 const START_ROOM := "c_drive"
+const SNIFF_BASE := 100.0
+const SNIFF_PER_SECRET := 6.0   # cada backup secreto aumenta o fôlego do faro
 
 var save_path := ""             # vazio = disco desligado (testes e ferramentas)
 var room := START_ROOM
@@ -47,13 +49,33 @@ func new_game() -> void:
 	room = START_ROOM
 	entry = {}
 	hp = MAX_HP
-	sniff = 100.0
+	sniff = SNIFF_BASE
 	abilities = {"dash": false}
 	restore = {}
 	visited = {}
 	taken = {}
 	arena_return = {}
 	boss_return = {}
+
+
+func clue_count() -> int:
+	return _count("clue:")
+
+
+func secret_count() -> int:
+	return _count("backup:")
+
+
+func max_sniff() -> float:
+	return SNIFF_BASE + SNIFF_PER_SECRET * secret_count()
+
+
+func _count(prefix: String) -> int:
+	var n := 0
+	for key in taken:
+		if key.begins_with(prefix):
+			n += 1
+	return n
 
 
 func save_game() -> void:
@@ -81,6 +103,7 @@ func load_game() -> bool:
 		visited[id] = true
 	for key in data.taken:
 		taken[key] = true
+	sniff = max_sniff()
 	if data.restore != "":
 		# a posição sai do mapa: se a sala mudar numa versão nova, o save continua valendo
 		restore = {"room": data.restore, "pos": Rooms.restore_point(data.restore)}
@@ -120,7 +143,7 @@ func enter_arena(back_room: String, back_pos: Vector2) -> void:
 ## Volta ao último ponto de restauração com a vida cheia (ou ao início).
 func respawn() -> void:
 	hp = MAX_HP
-	sniff = 100.0
+	sniff = max_sniff()
 	if restore.is_empty():
 		enter(START_ROOM)
 	else:

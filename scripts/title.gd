@@ -28,6 +28,7 @@ func _ready() -> void:
 	message = _label("", Vector2(0, 98))
 	menu = GameMenu.new()
 	add_child(menu)
+	menu.options_top = 24.0
 	show_main()
 
 
@@ -73,7 +74,7 @@ func show_main() -> void:
 
 
 func _show_game_options() -> void:
-	_set_page(Page.OPTIONS, 34)
+	_set_page(Page.OPTIONS, 24)
 	menu.show_game_options(show_main, _show_credits)
 
 
@@ -113,6 +114,8 @@ func _start_new() -> void:
 func _input(event: InputEvent) -> void:
 	if page != Page.MAIN and event.is_action_pressed("ui_cancel"):
 		get_viewport().set_input_as_handled()
+		if page == Page.OPTIONS and menu.go_back():
+			return
 		if page == Page.CREDITS:
 			_show_game_options()
 		else:

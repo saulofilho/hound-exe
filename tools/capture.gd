@@ -6,7 +6,7 @@ const T := 16
 # `-- store`: só estas, em inglês, 1920x1080, em steam/screenshots/
 const STORE := [
 	"gameplay-shoot.png", "boss-copies.png", "gameplay-arena.png", "gameplay-sniff.png",
-	"gameplay-laser.png", "boss-stunned.png", "gameplay-chip.png", "boss-intro.png",
+	"gameplay-laser.png", "boss-stunned.png", "gameplay-quarantine.png", "gameplay-hidden.png",
 ]
 var G: Node  # autoload Game
 var store := false
@@ -50,8 +50,10 @@ func _run() -> void:
 	if not store:
 		await _menus()
 	G.new_game()
-	for r in ["c_drive", "docs", "downloads", "trash"]:
-		G.visited[r] = true
+	var rooms: Dictionary = load("res://scripts/rooms.gd").DATA
+	for r in rooms:
+		if r != "ghost":
+			G.visited[r] = true
 
 	# Documentos: atirando nos bugs
 	await _go("docs", Vector2(12 * T + 8, 168))
@@ -65,13 +67,46 @@ func _run() -> void:
 	await _frames(40)
 	await _shot("gameplay-laser.png")
 
-	# Downloads: o chip de dash
-	await _go("downloads", Vector2(15 * T + 8, 168))
+	# Imagens: arquivos ocultos que o faro materializa
+	await _go("images", Vector2(13 * T + 8, 440))
+	Input.action_press("sniff")
+	await _frames(30)
+	await _shot("gameplay-hidden.png")
+	Input.action_release("sniff")
+
+	# Temp: plataformas temporárias sobre setor ruim
+	await _go("temp", Vector2(80, 472))
+	for i in 240:
+		await physics_frame
+		if current_scene.blocks.filter(func(b): return not b.secret and b.active).size() >= 4:
+			break
+	await _shot("gameplay-temp.png")
+
+	# Galeria: quarentena com Spam
+	G.sniff = 100.0
+	await _go("gallery", Vector2(20 * T, 168))
+	var q = current_scene.quarantine
+	await _frames(12)
+	q.wave = 2
+	await _frames(170)
+	await _shot("gameplay-quarantine.png")
+
+	# Documentos: a pasta que leva para Imagens
+	G.hp = 5
+	await _go("docs", Vector2(6 * T + 8, 168))
+	await _frames(24)
+	await _shot("gameplay-folder.png")
+
+	# Instaladores: o chip de dash, depois da quarentena
+	G.taken["quarantine:installers"] = true
+	await _go("installers", Vector2(40 * T + 8, 168))
 	await _frames(20)
 	await _shot("gameplay-chip.png")
 
 	# Lixeira: farejando a parede falsa
 	G.abilities.dash = true
+	for id in ["gallery", "installers"]:
+		G.taken["clue:" + id] = true
 	await _go("trash", Vector2(36 * T + 8, 168))  # fora do alcance que abre a parede: o rastro aparece
 	Input.action_press("sniff")
 	await _frames(25)
@@ -170,6 +205,15 @@ func _menus() -> void:
 	s.pause_menu.open()
 	await _frames(4)
 	await _shot("pause.png")
+	s.pause_menu._show_game_options()
+	await _frames(4)
+	await _shot("options.png")
+	s.pause_menu.menu.show_controls(s.pause_menu._show_main, "key")
+	await _frames(4)
+	await _shot("controls.png")
+	s.pause_menu.menu.show_controls(s.pause_menu._show_main, "pad")
+	await _frames(4)
+	await _shot("controls-pad.png")
 	s.pause_menu.close()
 	await _frames(6)
 	G.save_path = ""

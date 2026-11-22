@@ -5,7 +5,9 @@ extends Control
 
 var hp := 5
 var max_hp := 5
-var energy := -1.0        # faro, 0 a 100; < 0 esconde
+var energy := -1.0        # faro; < 0 esconde
+var max_energy := 100.0
+var clues := -1           # pistas achadas; < 0 esconde
 var sniffing := false
 var seconds_left := -1    # cronômetro da sala de cima
 var bugs := 0
@@ -20,6 +22,22 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+## Depois de remapear os nomes crescem: quebra entre itens em vez de cortar.
+static func hint_lines(text: String) -> PackedStringArray:
+	var lines := PackedStringArray()
+	var line := ""
+	for part in text.split(" · "):
+		var longer := part if line == "" else line + " · " + part
+		if line != "" and Art.text_width(longer) > Art.SCREEN.x - 8.0:
+			lines.append(line)
+			line = part
+		else:
+			line = longer
+	if line != "":
+		lines.append(line)
+	return lines
+
+
 func _process(_delta: float) -> void:
 	queue_redraw()
 
@@ -27,8 +45,11 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	var top := Art.SCREEN.y - Art.BAR_H
 	if hint != "":
-		draw_rect(Rect2(0, top - 12, Art.SCREEN.x, 12), Art.BLACK)
-		Art.text_centered(self, Art.SCREEN.x / 2.0, top - 12, hint, Art.MID)
+		var lines := hint_lines(hint)
+		var band := lines.size() * 12.0
+		draw_rect(Rect2(0, top - band, Art.SCREEN.x, band), Art.BLACK)
+		for i in lines.size():
+			Art.text_centered(self, Art.SCREEN.x / 2.0, top - band + i * 12.0, lines[i], Art.MID)
 
 	var x := Art.taskbar(self)
 	var y := top + 3
@@ -48,13 +69,22 @@ func _draw() -> void:
 		var sniff := Options.t("hud_sniff")
 		Art.text(self, Vector2(x, y), sniff)
 		x += Art.text_width(sniff) + 3
-		var blocks := ceili(energy / 10.0)
+		var blocks := clampi(ceili(energy / max_energy * 10.0), 0, 10)
 		Art.border(self, Rect2(x, y + 1, 53, 10))
 		for i in blocks:
 			# abaixo do mínimo para começar a farejar, fica apagado
 			var usable := sniffing or energy > Player.SNIFF_MIN
 			draw_rect(Rect2(x + 2 + i * 5, y + 3, 4, 6), Art.ACCENT if usable else Art.MID)
-		x += 60
+		x += 58
+		if clues >= 0:
+			for i in Rooms.CLUES:
+				# uma lupa por pista
+				var at := Vector2(x + i * 11, y + 2)
+				var ink := Art.ACCENT if i < clues else Art.MID
+				Art.border(self, Rect2(at, Vector2(6, 6)), ink)
+				draw_rect(Rect2(at + Vector2(6, 6), Vector2(2, 2)), ink)
+				if i < clues:
+					draw_rect(Rect2(at + Vector2(2, 2), Vector2(2, 2)), ink)
 	if seconds_left >= 0:
 		Art.text(self, Vector2(x, y), Options.t("hud_time") % seconds_left, Art.ACCENT if seconds_left <= 10 else Art.WHITE)
 		x += 52

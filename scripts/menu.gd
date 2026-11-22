@@ -5,6 +5,14 @@ extends VBoxContainer
 const WIDTH := 220.0
 
 
+var options_top := 34.0    # onde a lista de opções começa
+var compact := false       # linhas baixas, para a tela de controles
+var _listen_action := ""
+var _listen_device := ""
+var _listen_back := Callable()
+var _parent_page := Callable()  # para onde B volta, num submenu
+
+
 func _init() -> void:
 	add_theme_constant_override("separation", 3)
 
@@ -41,8 +49,11 @@ static func _bind_pad(action: String, button: JoyButton) -> void:
 ## `options` = [[texto, ao apertar, ao ajustar], ...]. O terceiro é opcional:
 ## recebe -1/1 (esquerda/direita) ou 0 (apertou) e devolve o texto novo.
 ## O foco começa em `focus`.
-func show_options(options: Array, focus := 0) -> void:
+func show_options(options: Array, focus := 0, low := false) -> void:
 	clear()
+	compact = low
+	add_theme_constant_override("separation", 1 if low else 3)
+	size = Vector2.ZERO
 	var buttons: Array[Button] = []
 	for option in options:
 		var button := _make_button(option[0])
@@ -94,10 +105,64 @@ func show_game_options(back: Callable, credits := Callable(), focus := 0) -> voi
 		return _switch_text("opt_shake", Options.shake)
 	rows.append([_switch_text("opt_shake", Options.shake), null, shake])
 
+	var controls := func() -> void:
+		show_controls(show_game_options.bind(back, credits, 5))
+	rows.append([Options.t("menu_controls"), controls])
 	if credits.is_valid():
 		rows.append([Options.t("menu_credits"), credits])
 	rows.append([Options.t("menu_back"), back])
 	show_options(rows, focus)
+	position = Vector2(position.x, options_top)
+
+
+## Uma linha por ação. `device` é "key" ou "pad".
+func show_controls(back: Callable, device := "", focus := 0) -> void:
+	if device == "":
+		device = "pad" if Options.pad else "key"
+	var rows := []
+	var swap := func() -> void:
+		show_controls.call_deferred(back, "pad" if device == "key" else "key", 0)
+	rows.append([_choice_text("ctrl_device", Options.t("ctrl_" + device)), swap])
+	for i in Controls.ACTIONS.size():
+		var action: String = Controls.ACTIONS[i]
+		var listen := func() -> void: _listen.call_deferred(action, device, back)
+		rows.append(["%s:  %s" % [Options.t("act_" + action), Options.button_name(action, device)], listen])
+	var reset := func() -> void:
+		Options.reset_bindings(device)
+		show_controls.call_deferred(back, device, Controls.ACTIONS.size() + 1)
+	rows.append([Options.t("ctrl_reset"), reset])
+	rows.append([Options.t("menu_back"), back])
+	show_options(rows, focus, true)
+	_parent_page = back
+	position = Vector2(position.x, 22)
+
+
+func _listen(action: String, device: String, back: Callable) -> void:
+	_listen_action = action
+	_listen_device = device
+	_listen_back = back
+	var button := get_child(Controls.ACTIONS.find(action) + 1) as Button
+	button.text = Options.t("ctrl_press_" + device)
+
+
+func _input(event: InputEvent) -> void:
+	if _listen_action == "":
+		return
+	var cancel: bool = event.is_action_pressed("pause")
+	var code := "" if cancel else Controls.code_from(event, _listen_device)
+	if event is InputEventMouseMotion:
+		return
+	get_viewport().set_input_as_handled()  # enquanto escuta, nada mais reage
+	if not cancel and code == "":
+		return
+	var action := _listen_action
+	var device := _listen_device
+	var back := _listen_back
+	_listen_action = ""
+	if code != "":
+		Options.rebind(device, action, code)
+		Sound.play("ui_ok")
+	show_controls.call_deferred(back, device, Controls.ACTIONS.find(action) + 1)
 
 
 static func _volume_text(bus: String, label: String) -> String:
@@ -126,7 +191,17 @@ func _make_adjustable(button: Button, adjust: Callable) -> void:
 			button.accept_event())
 
 
+## Volta um nível dentro do menu. false: já está no primeiro.
+func go_back() -> bool:
+	if not _parent_page.is_valid():
+		return false
+	_parent_page.call()
+	return true
+
+
 func clear() -> void:
+	_listen_action = ""
+	_parent_page = Callable()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -135,7 +210,7 @@ func clear() -> void:
 func _make_button(text: String) -> Button:
 	var button := Button.new()
 	button.text = text
-	button.custom_minimum_size = Vector2(WIDTH, 18)
+	button.custom_minimum_size = Vector2(WIDTH, 13 if compact else 18)
 	button.add_theme_font_size_override("font_size", Art.FONT_SIZE)
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	_paint(button, false)
@@ -155,6 +230,10 @@ func _paint(button: Button, lit: bool) -> void:
 	box.border_width_bottom = 2
 	box.border_width_right = 2
 	box.anti_aliasing = false
+	if compact:
+		box.border_width_bottom = 1
+		box.border_width_right = 1
+		box.set_content_margin_all(0)
 	for state in ["normal", "hover", "pressed", "hover_pressed"]:
 		button.add_theme_stylebox_override(state, box)
 	var ink := Art.BLACK if lit else Art.WHITE

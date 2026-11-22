@@ -26,6 +26,37 @@ machine, folder by folder, until it reaches the kernel. Working title.
 Feel references: *Gato Roboto*, *Not a Hero*, *Serious Sam: Bogus Detour* and
 *Minit*. Character, map and art are our own.
 
+## The demo: the Desktop region (0.2.0)
+
+Eleven rooms and three wings. The door at the end of the Trash asks for **three
+buried clues**; nothing shows them but sniffing, and each wing ends in one.
+
+| Wing | What it teaches | At the end |
+|---|---|---|
+| Pictures, Gallery | hidden files: platforms that exist for 7 seconds after a sniff | quarantine, clue |
+| Temp, Setup | temporary platforms over bad sectors | quarantine, dash chip, clue |
+| System32, Drivers | gaps and lasers that need the dash | quarantine, clue |
+
+- **Quarantines** lock you in with waves of bugs, including **Spam**, a winged
+  envelope that shakes, shows its line and dives. Clearing one opens the
+  shortcut back.
+- **Folders** are doors: press down in front of one.
+- **Bad sectors** cost 1 health and put the hound back on firm ground.
+- **Secret backups**, one per exploration room (10), each make sniffing last longer.
+- **Controls can be remapped** for keyboard and gamepad in OPTIONS > CONTROLS.
+
+A bot that knows the route finishes, collecting every secret, in about 5 and a
+half minutes. How long a first playthrough takes (the goal is 15 to 20) has not
+been measured with people yet.
+
+| Hidden files | Temporary platforms |
+|---|---|
+| ![Outlined platforms appear while sniffing](docs/img/gameplay-hidden.png) | ![Striped platforms over a floor of bad sectors](docs/img/gameplay-temp.png) |
+| **Quarantine** | **Folders** |
+| ![A gate locks the hound in with bugs and Spam](docs/img/gameplay-quarantine.png) | ![A label over the folder names the key and the destination](docs/img/gameplay-folder.png) |
+| **Remapping** | |
+| ![The list of actions and their keys](docs/img/controls.png) | |
+
 ## Screenshots
 
 Captured from the game itself.
@@ -39,14 +70,13 @@ Captured from the game itself.
 | Shooting bugs in Documentos | The laser only a dash gets through |
 |---|---|
 | ![The hound shooting at walking bugs](docs/img/gameplay-shoot.png) | ![Climbing platforms, a turret and the laser barrier](docs/img/gameplay-laser.png) |
-| **The dash chip in Downloads** | **Sniffing in Lixeira** |
-| ![The dash chip waiting at the end of the Downloads branch](docs/img/gameplay-chip.png) | ![Sniffing: the fake wall and the trail show up in teal](docs/img/gameplay-sniff.png) |
+| **The dash chip in Setup** | **Sniffing in Lixeira** |
+| ![The dash chip waiting past the Setup quarantine](docs/img/gameplay-chip.png) | ![Sniffing: the fake wall and the trail show up in teal](docs/img/gameplay-sniff.png) |
 | **Explorer (Tab)** | **Top-down room** |
-| ![The Explorer map with the four visited rooms](docs/img/gameplay-explorer.png) | ![The top-down arena: bug waves close in while the timer runs](docs/img/gameplay-arena.png) |
+| ![The Explorer map with the visited rooms](docs/img/gameplay-explorer.png) | ![The top-down arena: bug waves close in while the timer runs](docs/img/gameplay-arena.png) |
 
-The Desktop region has four connected rooms and a boss room. The hound starts **without the
-dash**; a laser in Documentos blocks the way to Lixeira, and the dash chip
-waits at the end of the Downloads branch. **Sniffing** slows time and makes shots deal double damage, and it is
+The hound starts **without the dash**; a laser in Documentos blocks the way to
+Lixeira, and the dash chip waits past the Setup quarantine. **Sniffing** slows time and makes shots deal double damage, and it is
 required: the fake wall that hides Lixeira's exit stays solid until it is
 sniffed up close. A
 **restore point** saves progress; dying sends you back to it. The door behind
@@ -123,7 +153,7 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 
 - [x] Connected rooms built from ASCII maps, with exits at the screen edges
 - [x] Game state that survives room changes (health, abilities, items taken)
-- [x] First ability gate: dash chip in Downloads, laser barrier in Documentos
+- [x] First ability gate: dash chip in Setup, laser barrier in Documentos
 - [x] Restore points; death returns you to the last one
 - [x] Explorer map (Tab) of visited rooms
 - [x] Top-down room returns to the region once cleared
@@ -132,12 +162,14 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] 1-bit sprites, tiles and wallpaper
 - [x] Sound effects and music (original chiptune, volume settings)
 - [x] Title screen, pause menu, save to disk
+- [x] Expanded region: 3 wings, clues, quarantines, shortcuts, secrets, Spam
+- [ ] Measure a first playthrough with people (goal: 15 to 20 minutes)
 
 ### Phase 2 checklist (Steam page and demo)
 
 - [x] English and Brazilian Portuguese
 - [x] Any controller, with prompts that follow the input in use
-- [x] Options: volume, language, fullscreen, screen shake; credits and licenses
+- [x] Options: volume, language, fullscreen, screen shake, remapping; credits and licenses
 - [x] An ending for the demo
 - [x] Windows, Linux and macOS export; SteamPipe scripts
 - [x] Store art, screenshots, gameplay trailer and store text
@@ -166,6 +198,7 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 | Action | Keyboard | Gamepad |
 |---|---|---|
 | Move | A/D or arrows | left stick |
+| Enter a folder | S or down arrow | left stick or D-pad down |
 | Aim up | W (with A/D: diagonal) | left stick up |
 | Jump | Space or Z | A |
 | Shoot (hold) | J or X | X |
@@ -176,13 +209,27 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 | Pause | Esc | Start |
 | Back to restore point | hold R (or the pause menu); a tap on the blue screen | pause menu; Start on the blue screen |
 
+These are the defaults: everything but pause, restart and top-down aiming can
+be remapped in OPTIONS > CONTROLS.
+
 ### Tests and tools
 
 ```bash
+# the whole game from NEW GAME to the ending, inputs only: every clue and
+# secret, real quarantines, arena and boss (roaming bugs removed; needs python3)
+godot --headless --fixed-fps 60 --path . -s tests/campaign.gd
+
+# proof over the maps: paths exist, shortcuts don't, no room traps the hound
+# (about a minute; run it after editing rooms.gd)
+python3 tools/check_rooms.py
+
+# region rules (blocks, clues, quarantine, shortcuts) and remapping
+godot --headless --fixed-fps 60 --path . -s tests/region.gd
+
 # rules and state, jumping between points by teleport (29 checks)
 godot --headless --path . -s tests/smoke.gd
 
-# start to top-down room door with inputs only (bugs removed), plus laser distances
+# Documentos, Downloads and Lixeira with inputs only, plus every laser distance
 godot --headless --path . -s tests/route.gd
 
 # art: font coverage, text widths and sprite sheets
@@ -268,7 +315,7 @@ drawn from the same ASCII maps as the collisions.
 ```bash
 tools/build.sh          # Windows, Linux and macOS into builds/
 tools/make_trailer.sh   # gameplay trailer (macOS only)
-tools/make_promo.sh     # 30 s promo video, 16:9 and 9:16 (macOS only)
+tools/make_promo.sh     # 33 s promo video, 16:9 and 9:16 (macOS only)
 ```
 
 Building needs the official Godot 4.7.2 export templates. Everything about
@@ -299,6 +346,10 @@ scripts/
 ├── hud.gd        taskbar HUD and boss bar
 ├── dialog_box.gd toasts and dialogs
 ├── options.gd    autoload "Options": language, fullscreen, shake, active input
+├── controls.gd   remappable keys and buttons, and their on-screen names
+├── special_block.gd hidden and temporary platforms
+├── quarantine.gd locking fight with waves
+├── spam.gd       flying bug that dives
 ├── texts.gd      every visible string, in Portuguese and English
 ├── rooms.gd      the Desktop region's rooms as ASCII maps, and how they link
 ├── stage.gd      shared base: controls, screen shake, hitstop, HUD, toasts
@@ -312,13 +363,14 @@ scripts/
 ├── walker.gd     patrolling bug
 ├── turret.gd     shooting bug
 └── chaser.gd     swarming bug (and bad_sector.gd, the corrupted floor) (top-down room)
-tests/            smoke, route, finish, exploits, arena, boss, save, audio, art and Steam tests
+tests/            campaign, region, smoke, route, finish, exploits, arena, boss, save, audio, art and Steam tests
 audio/            generated WAV files
 art/              generated sprite sheets and font
 tools/make_art.py sprites and font, drawn as text
 tools/build.sh    exports every platform
 steam/            store assets, texts and publishing guide
 tools/make_audio.py  synthesizer and scores
+tools/check_rooms.py reachability proof over the maps
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images
 ```
@@ -326,5 +378,8 @@ docs/             GDD, moodboard and images
 To change the rooms, edit `scripts/rooms.gd`. Map legend:
 `#` wall · `F` fake wall · `L` laser · `P` start · `R` restore point ·
 `A` dash chip · `B` boss · `E` exit that opens once the boss falls · `H` health patch · `D` door to the top-down room ·
-`w` walking bug · `t` turret. Each room's `links` say where every edge opening
-leads; the rows line up between rooms.
+`w` walking bug · `t` turret · `s` Spam · `o` hidden file · `T` temporary
+platform · `^` bad sector · `Q` quarantine gate · `S` secret backup ·
+`V` buried clue · `0`-`9` folder. `links` say where each edge opening leads
+(rows are local to each room), `doors` where each folder leads and `fight`
+describes the quarantine. Run `python3 tools/check_rooms.py` afterwards.

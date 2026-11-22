@@ -5,7 +5,7 @@ extends SceneTree
 
 const SHEETS := {
 	"hound": [24, 16, 14], "top_hound": [24, 24, 4], "walker": [16, 16, 4], "turret": [16, 16, 2],
-	"chaser": [16, 16, 2], "ghost": [32, 36, 5], "items": [16, 16, 7], "laser": [16, 16, 3],
+	"chaser": [16, 16, 2], "ghost": [32, 36, 5], "items": [16, 16, 11], "spam": [16, 16, 3], "laser": [16, 16, 3],
 	"icons": [24, 24, 6], "logo": [12, 10, 1],
 }
 const SCREEN_W := 384.0

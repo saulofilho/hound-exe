@@ -97,8 +97,8 @@ func _run() -> void:
 	_p("right", false)
 	_check("laser bloqueia sem dash", p.global_position.x < 44 * T)
 
-	# ---- Downloads: chip de dash
-	await _teleport("downloads", Vector2(18 * T + 8, 168))
+	# ---- Instaladores: chip de dash
+	await _teleport("installers", Vector2(41 * T + 8, 168))
 	_p("right", true)
 	await _frames(40)
 	_p("right", false)
@@ -152,6 +152,8 @@ func _run() -> void:
 	_check("volta ao ponto de restauração", G.room == "trash" and p.hp == p.MAX_HP and p.global_position.distance_to(s.restore_pos) < 4.0)
 
 	# ---- porta → sala de cima → de volta à Lixeira
+	for id in ["gallery", "installers", "drivers"]:
+		G.taken["clue:" + id] = true
 	p.global_position = s.door_pos
 	await _frames(8)
 	s = current_scene
@@ -176,7 +178,7 @@ func _run() -> void:
 		if G.room == "ghost":
 			await _boss_flow()
 
-	_check("Explorer conhece as 5 salas", G.visited.size() == 5)
+	_check("Explorer conhece as 5 salas visitadas", G.visited.size() == 5)
 
 	for k in checks:
 		print("%-36s %s" % [k, "ok" if checks[k] else "FALHOU"])

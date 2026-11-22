@@ -31,11 +31,13 @@ func _ready() -> void:
 
 	menu = GameMenu.new()
 	add_child(menu)
+	menu.options_top = 34.0
 
 
 func _draw_window() -> void:
 	var headings := ["pause_heading", "options_heading", "ending_heading"]
-	Art.window(_frame, Rect2(62, 22, 260, 184), Options.t(headings[page]))
+	var top_y := 3.0 if page == Page.OPTIONS else 22.0
+	Art.window(_frame, Rect2(62, top_y, 260, 206.0 - top_y), Options.t(headings[page]))
 	if page == Page.OPTIONS:
 		return
 	var key := "ending_text"
@@ -53,6 +55,8 @@ func _input(event: InputEvent) -> void:
 		if event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
 			get_viewport().set_input_as_handled()
 			if page == Page.OPTIONS and not event.is_action_pressed("pause"):
+				if menu.go_back():
+					return
 				_show_main()  # B no submenu volta um nível
 			else:
 				close()
@@ -106,7 +110,7 @@ func _show_main() -> void:
 
 
 func _show_game_options() -> void:
-	_set_page(Page.OPTIONS, 52)
+	_set_page(Page.OPTIONS, 34)
 	menu.show_game_options(_show_main)
 
 

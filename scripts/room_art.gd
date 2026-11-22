@@ -11,6 +11,12 @@ const THEMES := {
 	"docs": ["folder", "page", "page"],
 	"downloads": ["download", "page", "download"],
 	"trash": ["bin", "page", "folder"],
+	"images": ["page", "folder", "page"],
+	"gallery": ["page", "page", "computer"],
+	"temp": ["download", "bin", "page"],
+	"installers": ["drive", "download", "folder"],
+	"system32": ["computer", "folder", "drive"],
+	"drivers": ["drive", "computer", "drive"],
 	"ghost": ["page"],
 	"arena": [],
 }

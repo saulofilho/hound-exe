@@ -1,6 +1,7 @@
 extends Stage
 ## Sala lateral da região: monta a sala atual (Game.room) a partir de Rooms.DATA
-## e cuida de saídas, itens, laser, ponto de restauração, porta, chefe e Explorer.
+## e cuida de saídas, pastas, itens, pistas, perigos, quarentena, porta, chefe
+## e Explorer. A legenda dos mapas está em rooms.gd.
 
 const SPRITE := Vector2(16, 16)
 # quadros de items.png
@@ -11,6 +12,12 @@ const PATCH := 3
 const DOOR := 4
 const DOOR_CLEAR := 5
 const DOOR_LOCKED := 6
+const FOLDER := 7
+const FOLDER_SHUT := 8
+const CLUE := 9
+const BACKUP := 10
+const DIG_RANGE := 72.0        # farejar a esta distância desenterra a pista
+const FOLDER_RANGE := 11.0
 const REVEAL_RANGE := 96.0     # farejar a esta distância abre a parede falsa
 const NUDGE_RANGE := 26.0      # encostado nela sem farejar: o jogo dá a dica
 
@@ -35,6 +42,16 @@ var exit_pos := Vector2.ZERO   # saída da sala do chefe, trancada até ele cair
 var _room_art: RoomArt
 var _items: Texture2D
 var _laser_sheet: Texture2D
+var folders: Array[Dictionary] = []   # {"at", "to", "land", "shortcut"}
+var blocks: Array[SpecialBlock] = []
+var hazards: Array[Vector2] = []
+var quarantine: Quarantine
+var clue_pos := Vector2.ZERO
+var backup_pos := Vector2.ZERO
+var safe_pos := Vector2.ZERO          # último chão firme: para onde o setor ruim devolve
+var _gate_cells: Array[Vector2] = []
+var _clue_nudged := false
+var _shut_told := false
 
 
 func help_text() -> String:
@@ -74,11 +91,24 @@ func _build_level() -> void:
 					x += 1
 				_add_wall(s, y, x - s)
 				continue
+			if row[x] == "o" or row[x] == "T":
+				var s := x
+				while x < row.length() and row[x] == row[s]:
+					x += 1
+				_add_block(s, y, x - s, row[s] == "o")
+				continue
 			var at := Vector2(x * TILE + TILE / 2.0, y * TILE + TILE / 2.0)
 			match row[x]:
 				"P": start = at
 				"w": _spawn(Walker.new(), at)
 				"t": _spawn(Turret.new(), at)
+				"s": _spawn(Spam.new(), at)
+				"^": hazards.append(at)
+				"Q": _gate_cells.append(at)
+				"V": clue_pos = at
+				"S":
+					if not Game.taken.has("backup:" + Game.room):
+						backup_pos = at
 				"F": _add_fake_wall(at)
 				"R": restore_pos = at
 				"D": door_pos = at
@@ -89,9 +119,19 @@ func _build_level() -> void:
 					if not Game.taken.has(_key(at)):
 						patches.append(at)
 				"A":
-					if not Game.taken.has(_key(at)):
+					if not Game.abilities.dash:
 						chips.append(at)
+				_:
+					if row[x].is_valid_int():
+						_add_folder(at, row[x])
 			x += 1
+	if Game.taken.has("clue:" + Game.room):
+		clue_pos = Vector2.ZERO
+	if data.has("fight"):
+		quarantine = Quarantine.new()
+		quarantine.setup(data.fight, _gate_cells, Game.taken.has("quarantine:" + Game.room))
+		quarantine.cleared.connect(_on_quarantine_cleared)
+		add_child(quarantine)
 
 	player = Player.new()
 	player.hp = Game.hp
@@ -102,6 +142,7 @@ func _build_level() -> void:
 	else:
 		player.position = start if start != Vector2.ZERO else restore_pos
 	add_child(player)
+	safe_pos = player.position
 	# o chefe procura o cão ao nascer, então entra depois dele
 	if boss_at != Vector2.ZERO and not Game.taken.has("boss_desktop"):
 		boss = GhostFile.new()
@@ -128,6 +169,8 @@ func _ready() -> void:
 	refresh_text()
 	hud.hp = player.hp
 	hud.energy = player.sniff_energy
+	hud.max_energy = Game.max_sniff()
+	hud.clues = Game.clue_count()
 	if boss != null:
 		hud.boss_life = 1.0
 	hud.get_parent().add_child(_map_view)
@@ -210,8 +253,153 @@ func _facing_inward(x: float, speed: float) -> int:
 	return -1 if speed < 0.0 else 1
 
 
+## As três pistas, ou um save de antes de elas existirem, que já passou daqui.
+func door_unlocked() -> bool:
+	return Game.clue_count() >= Rooms.CLUES or Game.taken.has("arena_desktop")
+
+
 func overlay_open() -> bool:
 	return _map_view != null and _map_view.visible
+
+
+func _add_block(cx: int, cy: int, width: int, secret: bool) -> void:
+	var block := SpecialBlock.new()
+	block.width = width
+	block.secret = secret
+	block.phase = (cx * 0.37 + cy * 0.21) if not secret else 0.0  # vizinhas não somem juntas
+	block.position = Vector2((cx + width / 2.0) * TILE, cy * TILE + TILE / 2.0)
+	add_child(block)
+	blocks.append(block)
+
+
+func _add_folder(at: Vector2, mark: String) -> void:
+	var doors: Dictionary = data.get("doors", {})
+	if doors.has(mark):
+		var door: Dictionary = doors[mark]
+		var land := Vector2(door.at[0] * TILE + TILE / 2.0, door.at[1] * TILE + TILE / 2.0)
+		folders.append({"at": at, "to": door.to, "land": land, "shortcut": door.shortcut})
+
+
+## O atalho cai depois do portão: se abrisse na visita, pularia a quarentena.
+func folder_open(folder: Dictionary) -> bool:
+	return not folder.shortcut or Game.taken.has("quarantine:" + folder.to)
+
+
+func _update_folders(pp: Vector2) -> bool:
+	if player.hp <= 0:
+		return false
+	for folder in folders:
+		if pp.distance_to(folder.at) >= FOLDER_RANGE or not player.is_on_floor():
+			continue
+		if quarantine != null and quarantine.locked():
+			continue
+		if not Input.is_action_just_pressed("down"):
+			continue
+		if folder_open(folder):
+			_leaving = true
+			Game.hp = player.hp
+			set_sniffing(false)
+			Sound.play("folder")
+			Game.enter(folder.to, folder.land)
+			return true
+		if not _shut_told:
+			_shut_told = true
+			show_toast(Options.t("folder_shut"), 2.5)
+	return false
+
+
+func _clue_dug() -> bool:
+	return Game.taken.has("dug:" + Game.room)
+
+
+## A pista está enterrada: não se vê nem se pega sem farejar de perto.
+func _update_clue(pp: Vector2) -> void:
+	if clue_pos == Vector2.ZERO or player.hp <= 0:
+		return
+	if quarantine != null and quarantine.state != Quarantine.State.DONE:
+		return  # a pista é o prêmio da quarentena
+	var d := pp.distance_to(clue_pos)
+	if not _clue_dug():
+		if sniffing and d < DIG_RANGE:
+			Game.taken["dug:" + Game.room] = true
+			Sound.play("materialize", 1.3)
+			show_toast(Options.t("clue_dug"))
+		elif d < NUDGE_RANGE and not _clue_nudged:
+			_clue_nudged = true
+			show_toast(Options.t("clue_smells"), 3.0)
+	elif d < 12.0:
+		clue_pos = Vector2.ZERO
+		Game.taken["clue:" + Game.room] = true
+		Sound.play("clue")
+		add_shake(3.0)
+		var found := Game.clue_count()
+		if found >= Rooms.CLUES:
+			show_toast(Options.t("clue_all"), 4.0)
+		else:
+			show_toast(Options.t("clue_got") % [found, Rooms.CLUES], 3.0)
+		Game.save_game()
+
+
+func _update_backup(pp: Vector2) -> void:
+	if backup_pos != Vector2.ZERO and pp.distance_to(backup_pos) < 11.0:
+		backup_pos = Vector2.ZERO
+		Game.taken["backup:" + Game.room] = true
+		player.sniff_energy = Game.max_sniff()
+		Game.sniff = player.sniff_energy
+		Sound.play("secret")
+		show_toast(Options.t("secret_got") % [Game.secret_count(), secret_total()], 3.0)
+		Game.save_game()
+
+
+static func secret_total() -> int:
+	var n := 0
+	for id in Rooms.DATA:
+		for row in Rooms.DATA[id].map:
+			n += row.count("S")
+	return n
+
+
+func _update_hazards(pp: Vector2) -> void:
+	if hazards.is_empty() or player.hp <= 0:
+		return
+	for h in hazards:
+		if absf(pp.x - h.x) < 12.0 and absf(pp.y + 2.0 - h.y) < 13.0:
+			player.sink(safe_pos)
+			return
+	# chão firme = parede de verdade sob os dois pés (plataforma que some não conta)
+	if player.is_on_floor() and _firm(pp + Vector2(-6, 10)) and _firm(pp + Vector2(6, 10)):
+		safe_pos = pp
+
+
+func _firm(at: Vector2) -> bool:
+	var cell := Vector2i(floori(at.x / TILE), floori(at.y / TILE))
+	return cell.y >= 0 and cell.y < MAP.size() and cell.x >= 0 and cell.x < MAP[0].length() and MAP[cell.y][cell.x] == "#"
+
+
+func _reveal_blocks(pp: Vector2) -> void:
+	if not sniffing:
+		return
+	for block in blocks:
+		if block.secret and block.distance_to_point(pp) < SpecialBlock.REVEAL_RANGE:
+			block.reveal()
+
+
+func _on_quarantine_cleared() -> void:
+	Game.taken["quarantine:" + Game.room] = true
+	show_toast(Options.t("quarantine_clear"), 2.5)
+	Game.save_game()
+
+
+## O que o faro sente: [tipo, posição].
+func scents() -> Array:
+	var out := []
+	if clue_pos != Vector2.ZERO:
+		out.append(["clue", clue_pos])
+	for at in hidden_walls() + chips:
+		out.append(["secret", at])
+	if backup_pos != Vector2.ZERO:
+		out.append(["secret", backup_pos])
+	return out
 
 
 func _spawn(e: Node2D, at: Vector2) -> void:
@@ -240,7 +428,10 @@ func is_solid(cell: Vector2i) -> bool:
 	var row: String = MAP[cell.y]
 	if cell.x < 0 or cell.x >= row.length():
 		return false  # aberturas de saída
-	return row[cell.x] == "#" or (row[cell.x] == "F" and not revealed)
+	var c := row[cell.x]
+	if c == "Q":
+		return quarantine != null and quarantine.locked()
+	return c == "#" or c == "T" or (c == "F" and not revealed)
 
 
 func is_solid_at(pos: Vector2) -> bool:
@@ -257,6 +448,28 @@ func _draw() -> void:
 		for c in fake_walls:
 			_dashed_rect(Rect2(c - corner, SPRITE).grow(-1), ACCENT)
 
+	for h in hazards:
+		var flick := int(t / 120 + h.x) % 3
+		for i in 4:
+			var tall := 5 + (i * 3 + flick) % 5
+			var x := h.x - 8.0 + i * 4.0
+			draw_rect(Rect2(x, h.y + 8 - tall, 3, tall), ACCENT)
+			draw_rect(Rect2(x + 1, h.y + 8 - tall, 1, 2), Art.WHITE)
+	for folder in folders:
+		Art.frame(self, _items, FOLDER if folder_open(folder) else FOLDER_SHUT, folder.at - corner, SPRITE)
+		if is_instance_valid(player) and player.global_position.distance_to(folder.at) < FOLDER_RANGE + 8.0:
+			var label: String = Options.t("folder_enter") % Options.t("room_" + folder.to) if folder_open(folder) else Options.t("folder_locked")
+			var wide := Art.text_width(label) + 8.0
+			var left := clampf(folder.at.x - wide / 2.0, 2.0, MAP[0].length() * TILE - wide - 2.0)
+			var tag := Rect2(left, folder.at.y - 32.0, wide, 14)
+			draw_rect(tag, Art.BLACK)
+			Art.border(self, tag)
+			Art.text(self, tag.position + Vector2(4, 1), label)
+	if clue_pos != Vector2.ZERO and _clue_dug():
+		Art.frame(self, _items, CLUE, clue_pos - corner + Vector2(0, -2 if t / 250 % 2 == 0 else 0), SPRITE)
+	if backup_pos != Vector2.ZERO:
+		Art.frame(self, _items, BACKUP, backup_pos - corner, SPRITE)
+
 	for l in lasers:
 		Art.frame(self, _laser_sheet, t / 60 % 3, l - corner, SPRITE)
 	for p in patches:
@@ -269,15 +482,21 @@ func _draw() -> void:
 
 	var cleared: bool = Game.taken.has("boss_desktop")
 	if door_pos != Vector2.ZERO:
-		Art.frame(self, _items, DOOR_CLEAR if cleared else DOOR, door_pos - corner, SPRITE)
+		var look := DOOR_CLEAR if cleared else (DOOR if door_unlocked() else DOOR_LOCKED)
+		Art.frame(self, _items, look, door_pos - corner, SPRITE)
 	if exit_pos != Vector2.ZERO:
 		Art.frame(self, _items, DOOR if cleared else DOOR_LOCKED, exit_pos - corner, SPRITE)
 
 	if sniffing and is_instance_valid(player):
-		var targets := hidden_walls() + chips
+		var targets := scents()
 		if not targets.is_empty():
-			var target: Vector2 = targets[targets.size() - 1]
 			var from := player.global_position
+			# pista primeiro; senão, o segredo mais perto
+			var target: Vector2 = targets[0][1]
+			if targets[0][0] != "clue":
+				for scent in targets:
+					if from.distance_to(scent[1]) < from.distance_to(target):
+						target = scent[1]
 			var steps := int(from.distance_to(target) / 10.0)
 			var phase := t / 90 % 3
 			for i in range(1, steps):
@@ -302,6 +521,15 @@ func stage_process(_delta: float) -> void:
 	var pp := player.global_position
 	camera.global_position = pp + Vector2(player.facing * 32, -16)
 	queue_redraw()
+
+	if _update_folders(pp):
+		return
+	_update_hazards(pp)
+	_reveal_blocks(pp)
+	_update_clue(pp)
+	_update_backup(pp)
+	if quarantine != null and player.hp > 0:
+		quarantine.watch(pp)
 
 	for p in patches.duplicate():
 		if pp.distance_to(p) < 10.0:
@@ -341,6 +569,10 @@ func stage_process(_delta: float) -> void:
 			if not _door_told:
 				_door_told = true
 				show_toast(Options.t("region_clean"), 3.0)
+		elif not door_unlocked():
+			if not _door_told:
+				_door_told = true
+				show_toast(Options.t("door_needs") % [Rooms.CLUES, Game.clue_count()], 3.5)
 		elif Game.taken.has("arena_desktop"):
 			_leaving = true
 			Game.hp = player.hp
@@ -379,6 +611,8 @@ func stage_process(_delta: float) -> void:
 
 	_update_tension(pp)
 	_check_exit(pp)
+	hud.clues = Game.clue_count()
+	hud.max_energy = Game.max_sniff()
 	hud.hp = maxi(player.hp, 0)
 	hud.energy = player.sniff_energy
 	hud.sniffing = sniffing
@@ -388,6 +622,9 @@ func stage_process(_delta: float) -> void:
 func _update_tension(pp: Vector2) -> void:
 	if is_instance_valid(boss):
 		Sound.tension = 1.0 if boss.second_phase() else 0.0
+		return
+	if quarantine != null and quarantine.locked():
+		Sound.tension = 1.0
 		return
 	var nearest := INF
 	for e in get_tree().get_nodes_in_group("enemy"):
@@ -423,10 +660,16 @@ func _check_exit(pp: Vector2) -> void:
 			var target: Dictionary = Rooms.DATA[link.to]
 			var tw: float = target.map[0].length() * TILE
 			var x := tw - 10.0 if side == "left" else 10.0
+			# as aberturas ficam em linhas diferentes em cada sala
+			var y := pp.y
+			for back in target.links:
+				if back.to == Game.room:
+					y += (back.rows[1] - link.rows[1]) * TILE
+					y = clampf(y, back.rows[0] * TILE + 5.0, (back.rows[1] + 1) * TILE - 8.0)
 			_leaving = true
 			Game.hp = player.hp
 			set_sniffing(false)
-			Game.enter(link.to, Vector2(x, pp.y), player.velocity)
+			Game.enter(link.to, Vector2(x, y), player.velocity)
 			return
 
 
@@ -434,7 +677,7 @@ func _check_exit(pp: Vector2) -> void:
 
 ## Mapa das salas visitadas (Tab). Cada sala é um retângulo na grade da região.
 class ExplorerView extends Control:
-	const CELL := Vector2(36, 22)
+	const CELL := Vector2(32, 22)
 	var stage: Stage
 	var _closing := false
 
@@ -477,7 +720,7 @@ class ExplorerView extends Control:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.85))
 		var box := Rect2(60, 32, 264, 140)
 		Art.window(self, box, Options.t("explorer_title") + Options.t("room_" + Game.room))
-		var origin := box.position + Vector2(26, 64)
+		var origin := box.position + Vector2(22, 60)
 		var blink := Time.get_ticks_msec() / 300 % 2 == 0
 		var monitor := Art.texture("items")
 		for id in Rooms.DATA:
@@ -485,11 +728,14 @@ class ExplorerView extends Control:
 				continue
 			var r: Dictionary = Rooms.DATA[id]
 			var screens: int = maxi(1, r.map[0].length() / 24)
-			var rect := Rect2(origin + Vector2(r.grid) * CELL, Vector2(screens * CELL.x - 3, CELL.y - 3))
+			var floors: int = 2 if r.map.size() > 13 else 1
+			var rect := Rect2(origin + Vector2(r.grid) * CELL, Vector2(screens * CELL.x - 3, floors * CELL.y - 3))
 			var here: bool = id == Game.room
 			draw_rect(rect, Art.ACCENT if here and blink else Art.SHADE)
 			Art.border(self, rect)
 			if Game.restore.get("room", "") == id:
 				Art.frame(self, monitor, 1, rect.position + Vector2(2, 2), Vector2(16, 16))
+			if Game.taken.has("clue:" + id):
+				Art.frame(self, monitor, 9, rect.end - Vector2(16, 16), Vector2(16, 16))
 		Art.frame(self, monitor, 1, box.position + Vector2(8, box.size.y - 21), Vector2(16, 16))
 		Art.text(self, box.position + Vector2(28, box.size.y - 18), Options.t("explorer_legend"), Art.MID)

@@ -8,9 +8,9 @@ confira os links no fim antes de cada envio.
 | Objetivo | Situação |
 |---|---|
 | Página "Em breve" | **Material pronto.** Dependem de você: conta, taxa, nome, contato de suporte e respostas do questionário |
-| Demo (Windows e Linux) | **Builds prontos, ainda não envie:** o caminho crítico dura cerca de 2 minutos (meta: 15 a 20), falta teste com pessoas e os builds nunca foram abertos nesses sistemas |
+| Demo (Windows e Linux) | **Builds prontos, ainda não envie:** o bot leva 5 min 30 s pela região inteira, e a duração para quem joga pela primeira vez (meta: 15 a 20) ainda não foi medida com pessoas. Os builds nunca foram abertos nesses sistemas |
 | Demo (macOS) | **Bloqueada:** falta notarizar (conta Apple Developer, paga à parte) |
-| Jogo completo, pago | **Não está pronto.** Existe 1 das 5 regiões do GDD, poucos minutos de jogo. A análise compara o build com a página e recusa jogo incompleto vendido como completo |
+| Jogo completo, pago | **Não está pronto.** Existe 1 das 5 regiões do GDD. A análise compara o build com a página e recusa jogo incompleto vendido como completo |
 
 O caminho que fecha com o que existe hoje: página "Em breve", demo, Next Fest e
 produção das regiões 2 a 5. O lançamento vem depois.
@@ -121,8 +121,8 @@ exige o SDK da Steam.
 |---|---|
 | Cápsulas, Library, fundo e ícones | `steam/assets/` (`tools/make_store_art.py`) |
 | 8 capturas 1920x1080, em inglês | `steam/screenshots/` (`godot --path . -s tools/capture.gd -- store`) |
-| Trailer de gameplay, 34 s | `builds/trailer/` (`tools/make_trailer.sh`) |
-| Vídeo de divulgação, 30 s, 16:9 e 9:16 | `builds/promo/` (`tools/make_promo.sh`). Para redes; na Steam, só como trailer secundário |
+| Trailer de gameplay, 38 s | `builds/trailer/` (`tools/make_trailer.sh`) |
+| Vídeo de divulgação, 33 s, 16:9 e 9:16 | `builds/promo/` (`tools/make_promo.sh`). Para redes; na Steam, só como trailer secundário |
 | Textos em inglês e português | [LOJA.md](LOJA.md) |
 
 Marque as capturas e o trailer como gameplay e para todas as idades.
@@ -154,7 +154,7 @@ importante para você, confirme com um advogado.
 
 | Critério | Situação |
 |---|---|
-| Tudo acessível no controle, sem configurar | feito e testado com eventos simulados |
+| Tudo acessível no controle, sem configurar | feito e testado com eventos simulados (e remapeável) |
 | Só botões de controle na tela quando em uso | feito e testado |
 | Texto com pelo menos 9 px em 1280x800 | 15 px |
 | Sem launcher e sem digitação | feito |
@@ -167,6 +167,7 @@ O pedido de análise de compatibilidade só abre depois da análise do build.
 ## 8. Antes de cada envio
 
 - [ ] Subir a versão em `project.godot` e `export_presets.cfg`.
+- [ ] Conferir o roteiro do analista em LOJA.md jogando por ele.
 - [ ] Rodar os testes (lista no README) e `tools/build.sh`.
 - [ ] Abrir num Windows limpo, sem Godot e sem Visual C++.
 - [ ] Abrir num Linux ou Steam Deck.

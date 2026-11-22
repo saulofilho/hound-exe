@@ -8,23 +8,38 @@ Metroidvania de ação em pixel art 1-bit com o cão do
 - Design: [docs/GDD.md](docs/GDD.md)
 - Moodboard: [docs/moodboard.html](docs/moodboard.html)
 
-## Protótipo da fase 0
+## A demo: região Área de trabalho (0.2.0)
 
-A fase 0 começou com arte cinza, para testar se correr, pular e atirar com o cão é
-gostoso (GDD, seção 11).
+Onze salas em três alas. A porta no fim da Lixeira exige **três pistas
+enterradas**, que só o faro mostra, e cada ala termina em uma.
 
-**O que já tem:** corredor lateral de 3 telas, pulo com *coyote time*, *jump
-buffer* e altura variável, dash (também no ar, uma vez), tiro em 3 direções com
-coice, dois bugs (um que anda e uma torreta que avisa antes de atirar), tremor
-de tela, *hitstop*, estilhaços e a "tela azul" ao morrer.
+| Ala | O que ensina | No fim |
+|---|---|---|
+| Imagens, Galeria | arquivos ocultos: plataformas que existem por 7 segundos depois de farejadas | quarentena, pista |
+| Temp, Setup | plataformas temporárias sobre setor ruim | quarentena, chip de dash, pista |
+| System32, Drivers | vãos e lasers que pedem o dash | quarentena, pista |
 
-**Também já tem:** faro (Shift: câmera lenta, parede falsa, rastro e ponto
-fraco com tiro dobrado) e a porta para a sala de cima (45 segundos de ondas de
-bugs, mira com mouse ou analógico direito). Detalhes atualizados no
-[README em inglês](README.md).
+- **Quarentenas** trancam o cão com ondas de bugs, entre eles o **Spam**, um
+  envelope com asas que treme, mostra a linha e mergulha. Vencer uma abre o
+  atalho de volta.
+- **Pastas** são portas: aperte para baixo na frente de uma.
+- **Setor ruim** tira 1 de vida e devolve o cão ao chão firme.
+- **Backups secretos**, um por sala de exploração (10), deixam o faro mais longo.
+- **Controles remapeáveis**, teclado e gamepad, em OPÇÕES > CONTROLES.
 
-**Fase 1 em andamento:** a região Área de trabalho já tem salas ligadas, chip
-de dash e o chefe, o Arquivo Fantasma. A arte é 1-bit com teal como cor da região, HUD estilo Windows 95 e fonte
+Um bot que conhece o caminho termina, com todos os segredos, em cerca de 5
+minutos e meio. A duração para quem joga pela primeira vez (meta: 15 a 20)
+ainda não foi medida com pessoas.
+
+| Arquivos ocultos | Plataformas temporárias |
+|---|---|
+| ![Plataformas aparecem no faro](docs/img/gameplay-hidden.png) | ![Plataformas sobre setor ruim](docs/img/gameplay-temp.png) |
+| **Quarentena** | **Pastas** |
+| ![A grade tranca o cão com os bugs](docs/img/gameplay-quarantine.png) | ![A etiqueta mostra a tecla e o destino](docs/img/gameplay-folder.png) |
+| **Remapeamento** | |
+| ![Lista de ações e teclas](docs/img/controls.png) | |
+
+A arte é 1-bit, com teal como cor da região, HUD estilo Windows 95 e fonte
 pixel própria com acentos, tudo gerado por `tools/make_art.py`.
 
 ![Primeira sala de C:](docs/img/gameplay-start.png)
@@ -32,7 +47,7 @@ pixel própria com acentos, tudo gerado por `tools/make_art.py`.
 O jogo abre na tela de título, salva sozinho e pausa com Esc (ou Start).
 Ao continuar, o cão volta ao último ponto de restauração.
 A música e os efeitos são originais (`tools/make_audio.py`); volume, idioma
-(português ou inglês), tela cheia e tremor ficam em OPÇÕES, no título e na pausa.
+(português ou inglês), tela cheia, tremor e controles ficam em OPÇÕES, no título e na pausa.
 
 O faro é obrigatório: a parede falsa só abre farejada e, na segunda fase do
 chefe, só ele acerta o original. Na sala de cima, quem fica parado perde.
@@ -53,26 +68,47 @@ Depois de clonar, importe uma vez antes de rodar:
 | Ação | Teclado | Controle |
 |---|---|---|
 | Mover | A/D ou setas | analógico esquerdo |
+| Entrar numa pasta | S ou seta para baixo | analógico ou direcional para baixo |
 | Mirar para cima | W (com A/D: diagonal) | analógico para cima |
 | Pular | Espaço ou Z | A |
 | Atirar (segurar) | J ou X | X |
 | Dash | K ou C | B |
+| Farejar (segurar) | Shift ou L | gatilho esquerdo |
+| Explorer | Tab | View |
 | Pausar | Esc | Start |
 | Voltar ao ponto de restauração | segurar R (um toque na tela azul) | menu de pausa |
+
+### Testes
+
+Depois de mexer nas salas:
+
+```bash
+python3 tools/check_rooms.py
+godot --headless --fixed-fps 60 --path . -s tests/campaign.gd
+```
+
+O primeiro prova, nos mapas, que o caminho existe, que o atalho não existe e
+que nenhuma sala prende o cão. O segundo joga do jogo novo até o fim só com os
+controles (sem os bugs soltos; com quarentenas, sala de cima e chefe). A lista
+completa de testes está no [README em inglês](README.md#tests-and-tools).
 
 ### Estrutura
 
 ```
-project.godot     configuração (tela base 384×216, escala inteira, pixel nítido)
-main.tscn         cena principal
+project.godot     configuração (384×216, escala inteira, pixel nítido)
+title.tscn        título (o jogo abre aqui)
+main.tscn         sala lateral
+arena.tscn        sala de cima
 scripts/
-├── main.gd       monta o corredor a partir de um mapa ASCII, câmera, HUD e efeitos
-├── player.gd     o cão: movimento, dash, tiro, dano
-├── bullet.gd     tiros do cão e dos bugs
-├── enemy.gd      base dos bugs: vida, piscar, knockback, estilhaços
-├── walker.gd     bug que patrulha
-└── turret.gd     bug que atira
+├── rooms.gd      mapas ASCII da região
+├── main.gd       monta a sala: saídas, pastas, pistas, perigos, porta
+├── player.gd     o cão
+├── controls.gd   teclas e botões remapeáveis
+├── texts.gd      todo texto, em português e inglês
+└── ...           descritos no README em inglês
+tests/            testes
+tools/            arte, áudio, verificador de salas, capturas, vídeos, builds
+steam/            artes, textos e guia de publicação
 ```
 
-Para mudar o corredor, edite o `MAP` em `scripts/main.gd`:
-`#` parede · `P` cão · `w` bug que anda · `t` torreta · `E` fim.
+Para mudar as salas, edite `scripts/rooms.gd`; a legenda está no topo dele.

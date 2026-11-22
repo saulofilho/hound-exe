@@ -91,10 +91,10 @@ func _files() -> void:
 	used.erase("scent_")
 	used.erase("_die")
 	used.erase("_hit")
-	for kind in ["walker", "turret", "chaser"]:
+	for kind in ["walker", "turret", "chaser", "spam"]:
 		used[kind + "_hit"] = true
 		used[kind + "_die"] = true
-	for kind in ["walker", "turret", "ghost", "secret"]:
+	for kind in ["walker", "turret", "ghost", "secret", "spam", "clue"]:
 		used["scent_" + kind] = true
 	for track in S.TRACKS.values():
 		for layer in track.base + ([track.extra] if track.extra != "" else []):
@@ -144,7 +144,7 @@ func _events() -> void:
 	await _hold("shoot", 10)
 	_heard("shoot")
 
-	G.enter("downloads", Vector2(18 * 16 + 8, 168))
+	G.enter("installers", Vector2(41 * 16 + 8, 168))
 	await _frames(8)
 	var music_player = S._music
 	await _hold("right", 40)
@@ -153,6 +153,8 @@ func _events() -> void:
 	await _frames(40)
 	await _hold("dash", 3)
 	_heard("dash")
+	G.enter("downloads", Vector2(120, 168))
+	await _frames(8)
 	var s = current_scene
 	s.player.hp = 3
 	s.player.global_position = s.patches[0]
@@ -167,7 +169,7 @@ func _events() -> void:
 	for e in get_nodes_in_group("enemy"):
 		if e.sound_kind == "walker":
 			walker = e
-		else:
+		elif e.sound_kind == "turret":
 			turret = e
 	s.player.global_position = walker.global_position - Vector2(70, 0)
 	await _frames(50)
@@ -221,6 +223,8 @@ func _events() -> void:
 	G.enter("trash", Vector2(680, 168))
 	await _frames(8)
 	s = current_scene
+	for id in ["gallery", "installers", "drivers"]:
+		G.taken["clue:" + id] = true
 	s.player.global_position = s.door_pos
 	await _frames(8)
 	_heard("door")

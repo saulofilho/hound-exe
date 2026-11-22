@@ -147,6 +147,8 @@ func _run() -> void:
 	seed(3)
 	G.new_game()
 	G.abilities.dash = true
+	for id in ["gallery", "installers", "drivers"]:
+		G.taken["clue:" + id] = true
 	root.get_node("Options").show_ending = true
 	G.enter("trash", Vector2(12, 168))
 	await _frames(6)

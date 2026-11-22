@@ -183,7 +183,7 @@ func _child_play() -> void:
 	await _key(KEY_ENTER)
 	await _frames(8)
 	await _hold("right", 25)
-	G.enter("downloads", Vector2(18 * 16 + 8, 168))
+	G.enter("installers", Vector2(41 * 16 + 8, 168))
 	await _frames(6)
 	await _hold("right", 40)
 	if failures == 0 and G.abilities.dash:
@@ -199,11 +199,13 @@ func _child_resume() -> void:
 	await _frames(8)
 	var s = current_scene
 	_check("continua em C: no ponto, vida cheia", G.room == "c_drive" and s.player.global_position.distance_to(s.restore_pos) < 5.0 and s.player.hp == 5)
-	_check("dash e salas visitadas voltam", G.abilities.dash and G.visited.has("downloads"))
-	G.enter("downloads", Vector2(250, 168))
+	_check("dash e salas visitadas voltam", G.abilities.dash and G.visited.has("installers"))
+	G.enter("installers", Vector2(664, 168))
+	await _frames(8)
+	_check("chip pego nao reaparece", current_scene.chips.is_empty())
+	G.enter("downloads", Vector2(120, 168))
 	await _frames(8)
 	s = current_scene
-	_check("chip pego nao reaparece", s.chips.is_empty())
 
 	# pausa pelo teclado
 	var bug = get_first_node_in_group("enemy")

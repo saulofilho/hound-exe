@@ -113,7 +113,7 @@ func _texts() -> void:
 				if c.unicode_at(0) >= 32 and not font.has_char(c.unicode_at(0)):
 					missing[c] = key
 			var limit := 376.0
-			if key.begins_with("menu_"):
+			if key.begins_with("menu_") or key.begins_with("ctrl_") or key.begins_with("act_"):
 				limit = 212.0
 			elif key.begins_with("icon_"):
 				limit = 51.0
@@ -265,7 +265,7 @@ func _options() -> void:
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_A)
-	for i in 5:
+	for i in 6:
 		await _pad(JOY_BUTTON_DPAD_DOWN)
 	await _pad(JOY_BUTTON_A)
 	_check("controle chega nos creditos", current_scene.page == 3)

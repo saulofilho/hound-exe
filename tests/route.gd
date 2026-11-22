@@ -1,5 +1,6 @@
 extends SceneTree
-## Percorre C:\ até a porta da Lixeira só com os controles, sem teleporte.
+## Documentos, Downloads e Lixeira só com os controles, já com o chip.
+## (O jogo inteiro é tests/campaign.gd; aqui é o laser de todas as distâncias.)
 ## Os bugs são removidos: aqui se testa a geometria das salas e o laser.
 ## Rodar: godot --headless --path . -s tests/route.gd
 
@@ -85,6 +86,7 @@ func _hop(x: float, floor_y: float) -> bool:
 func _run() -> void:
 	await physics_frame
 	G.new_game()
+	G.abilities.dash = true
 	change_scene_to_file("res://main.tscn")
 	await _frames(5)
 
@@ -103,7 +105,6 @@ func _run() -> void:
 	_expect("Documentos -> Downloads", G.room == "downloads")
 	await _clear_bugs()
 	await _walk(328)
-	_expect("pega o chip", G.abilities.dash)
 
 	await _walk(258)
 	_expect("volta 1", await _hop(216, 144))
@@ -158,6 +159,8 @@ func _run() -> void:
 	Input.action_press("sniff")
 	await _frames(12)
 	Input.action_release("sniff")
+	for id in ["gallery", "installers", "drivers"]:
+		G.taken["clue:" + id] = true
 	await _walk(740, 700)
 	await _frames(10)
 	_expect("porta da sala de cima", current_scene.name == "Arena")

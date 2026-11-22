@@ -115,6 +115,18 @@ o tempo de faro.
 Cada região tem 2 ou 3 salas de cima. A meta é de 4 a 6 horas de jogo na
 primeira vez, e mais com 100% do mapa.
 
+### 7.1 Região 1, como construída (0.2.0)
+
+A porta da Lixeira pede 3 pistas enterradas, uma no fim de cada ala:
+
+1. **Imagens e Galeria:** arquivos ocultos, que o faro materializa por 7 s.
+2. **Temp e Setup:** plataformas temporárias sobre setor ruim; dá o dash.
+3. **System32 e Drivers:** vãos e lasers; pede dash e faro juntos.
+
+Cada ala fecha numa quarentena (3 ondas), que abre um atalho quando vencida.
+Um segredo por sala de exploração aumenta o faro, não a vida: mais vida
+deixaria vencer o chefe parado. Inimigo novo: Spam, que avisa e mergulha.
+
 ## 8. Estilo visual e som
 
 - **Arte:** 1-bit (preto e branco), com **uma cor de destaque por região**.
@@ -210,8 +222,12 @@ morrem por culpa do jogo ou delas.
 
 ## 13.1 Regras que os testes protegem
 
-- **O faro é necessário:** abre a parede falsa e é o único jeito de acertar o
-  chefe na segunda fase.
+- **O faro é necessário:** sobe Imagens e Temp, desenterra as pistas, abre a
+  parede falsa e é o único jeito de acertar o chefe na segunda fase.
+- **Não há atalho:** nenhuma ala se completa sem a habilidade dela e o atalho
+  de volta só abre com a quarentena vencida (`tools/check_rooms.py`,
+  `tests/region.gd`).
+- **Ninguém fica preso:** de todo chão firme alcançável se sai da sala.
 - **Parado não se vence:** nem na sala de cima, nem no chefe.
 
 `tests/exploits.gd` falha se uma delas cair. Toda região nova precisa das duas.

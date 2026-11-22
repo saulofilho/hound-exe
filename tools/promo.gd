@@ -186,6 +186,8 @@ func _run() -> void:
 
 	await _hook()
 	await _shooting()
+	await _hidden()
+	await _quarantine()
 	await _chip()
 	await _laser()
 	await _sniffing()
@@ -234,8 +236,34 @@ func _shooting() -> void:
 	await _frames(14)
 
 
+func _hidden() -> void:
+	var s = await _cut("images", Vector2(13 * T + 8, 440), "REVEAL HIDDEN FILES.")
+	for e in get_nodes_in_group("enemy"):
+		e.queue_free()
+	await _frames(14)
+	_hold("sniff")
+	await _frames(30)
+	_hold("sniff", false)
+	_report("materializa arquivo oculto", s.blocks.any(func(b): return b.secret and b.active))
+	await _frames(50)
+
+
+func _quarantine() -> void:
+	G.hp = 5
+	G.sniff = 100.0
+	var s = await _cut("gallery", Vector2(20 * T, 168), "BREAK QUARANTINE.")
+	await _frames(8)
+	_report("quarentena tranca", s.quarantine.locked())
+	s.player.facing = 1
+	_hold("shoot")
+	await _frames(95)
+	_release()
+	await _frames(20)
+
+
 func _chip() -> void:
-	await _cut("downloads", Vector2(18 * T, 168), "FIND NEW TOOLS.")
+	G.taken["quarantine:installers"] = true
+	await _cut("installers", Vector2(40 * T + 8, 168), "FIND NEW TOOLS.")
 	for e in get_nodes_in_group("enemy"):
 		e.queue_free()
 	_hold("right")
@@ -268,6 +296,8 @@ func _laser() -> void:
 
 
 func _sniffing() -> void:
+	for id in ["gallery", "installers", "drivers"]:
+		G.taken["clue:" + id] = true
 	var s = await _cut("trash", Vector2(36 * T, 168), "SNIFF OUT SECRETS.")
 	for e in get_nodes_in_group("enemy"):
 		if e.global_position.y > 150.0:

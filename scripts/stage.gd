@@ -19,7 +19,6 @@ var _restart_held := 0.0
 
 
 func _ready() -> void:
-	_setup_input()
 	RenderingServer.set_default_clear_color(Color.BLACK)
 	Engine.time_scale = 1.0
 	Sound.muffled = false
@@ -170,56 +169,3 @@ func _build_hud(help: String) -> void:
 	banner.titled = true
 	banner.visible = false
 	layer.add_child(banner)
-
-
-# ---- controles
-
-func _setup_input() -> void:
-	var keys := {
-		"left": [KEY_A, KEY_LEFT], "right": [KEY_D, KEY_RIGHT],
-		"up": [KEY_W, KEY_UP], "down": [KEY_S, KEY_DOWN],
-		"jump": [KEY_SPACE, KEY_Z], "shoot": [KEY_J, KEY_X],
-		"dash": [KEY_K, KEY_C], "sniff": [KEY_SHIFT, KEY_L], "restart": [KEY_R], "map": [KEY_TAB], "pause": [KEY_ESCAPE],
-	}
-	var pad_buttons := {"jump": JOY_BUTTON_A, "shoot": JOY_BUTTON_X, "dash": JOY_BUTTON_B, "pause": JOY_BUTTON_START, "map": JOY_BUTTON_BACK}
-	var pad_axes := {
-		"left": [JOY_AXIS_LEFT_X, -1.0], "right": [JOY_AXIS_LEFT_X, 1.0],
-		"up": [JOY_AXIS_LEFT_Y, -1.0], "down": [JOY_AXIS_LEFT_Y, 1.0],
-		"sniff": [JOY_AXIS_TRIGGER_LEFT, 1.0], "shoot": [JOY_AXIS_TRIGGER_RIGHT, 1.0],
-		"aim_left": [JOY_AXIS_RIGHT_X, -1.0], "aim_right": [JOY_AXIS_RIGHT_X, 1.0],
-		"aim_up": [JOY_AXIS_RIGHT_Y, -1.0], "aim_down": [JOY_AXIS_RIGHT_Y, 1.0],
-	}
-	var actions := keys.keys()
-	for a in pad_axes:
-		if not a in actions:
-			actions.append(a)
-	for action in actions:
-		if InputMap.has_action(action):
-			continue
-		InputMap.add_action(action, 0.4)
-		for k in keys.get(action, []):
-			var ev := InputEventKey.new()
-			ev.physical_keycode = k
-			InputMap.action_add_event(action, ev)
-		if pad_buttons.has(action):
-			var jb := InputEventJoypadButton.new()
-			jb.device = -1  # qualquer controle, não só o primeiro
-			jb.button_index = pad_buttons[action]
-			InputMap.action_add_event(action, jb)
-		if pad_axes.has(action):
-			var jm := InputEventJoypadMotion.new()
-			jm.device = -1
-			jm.axis = pad_axes[action][0]
-			jm.axis_value = pad_axes[action][1]
-			InputMap.action_add_event(action, jm)
-	if InputMap.has_action("shoot") and not _has_mouse(InputMap.action_get_events("shoot")):
-		var mb := InputEventMouseButton.new()
-		mb.button_index = MOUSE_BUTTON_LEFT
-		InputMap.action_add_event("shoot", mb)
-
-
-func _has_mouse(events: Array) -> bool:
-	for e in events:
-		if e is InputEventMouseButton:
-			return true
-	return false

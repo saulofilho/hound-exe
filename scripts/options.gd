@@ -17,15 +17,46 @@ var shake: bool = DEFAULTS.shake
 var pad := false         # o controle foi a última entrada usada
 var live := false
 var show_ending := false
+var bindings := {}       # teclas e botões, ver controls.gd
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	bindings = Controls.defaults()
+	Controls.apply(bindings)
 	Input.joy_connection_changed.connect(_on_pad_connection)
 
 
 func t(key: String) -> String:
-	return Texts.lookup(key, language, pad)
+	var text := Texts.lookup(key, language, pad)
+	if not "{" in text:
+		return text
+	# {jump}, {sniff}...: o botão de verdade, depois de remapear
+	for action in Controls.ACTIONS:
+		var token := "{%s}" % action
+		if token in text:
+			text = text.replace(token, button_name(action, "pad" if pad else "key"))
+	return text
+
+
+func button_name(action: String, device: String) -> String:
+	return Controls.label(bindings[device][action][0], language)
+
+
+func rebind(device: String, action: String, code: String) -> void:
+	Controls.assign(bindings, device, action, code)
+	_bindings_changed()
+
+
+func reset_bindings(device: String) -> void:
+	bindings[device] = Controls.defaults()[device]
+	_bindings_changed()
+
+
+func _bindings_changed() -> void:
+	Controls.apply(bindings)
+	_write()
+	changed.emit()
 
 
 func version() -> String:
@@ -44,6 +75,7 @@ func load_options() -> void:
 	language = _system_language() if live else DEFAULTS.language
 	fullscreen = DEFAULTS.fullscreen
 	shake = DEFAULTS.shake
+	bindings = Controls.defaults()
 	var file := path()
 	if file != "" and FileAccess.file_exists(file):
 		var json := JSON.new()
@@ -55,6 +87,8 @@ func load_options() -> void:
 				fullscreen = saved.fullscreen
 			if saved.get("shake") is bool:
 				shake = saved.shake
+			bindings = Controls.validated(saved.get("bindings"))
+	Controls.apply(bindings)
 	if live:
 		show_ending = true
 		_apply_window()
@@ -78,7 +112,7 @@ func _write() -> void:
 		return
 	var out := FileAccess.open(file, FileAccess.WRITE)
 	if out != null:
-		out.store_string(JSON.stringify({"language": language, "fullscreen": fullscreen, "shake": shake}))
+		out.store_string(JSON.stringify({"language": language, "fullscreen": fullscreen, "shake": shake, "bindings": bindings}))
 		out.close()
 
 

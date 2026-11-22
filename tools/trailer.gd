@@ -64,8 +64,28 @@ func _run() -> void:
 	_release()
 	await _frames(30)
 
+	# arquivos ocultos
+	await _room("images", Vector2(13 * T + 8, 440))
+	for e in get_nodes_in_group("enemy"):
+		e.queue_free()
+	await _frames(15)
+	_hold("sniff")
+	await _frames(35)
+	_release()
+	await _frames(45)
+
+	# quarentena
+	G.hp = 5
+	await _room("gallery", Vector2(20 * T, 168))
+	current_scene.player.facing = 1
+	_hold("shoot")
+	await _frames(110)
+	_release()
+	G.hp = 5
+
 	# o chip de dash
-	await _room("downloads", Vector2(17 * T, 168))
+	G.taken["quarantine:installers"] = true
+	await _room("installers", Vector2(40 * T, 168))
 	for e in get_nodes_in_group("enemy"):
 		e.queue_free()
 	await _frames(20)
@@ -91,6 +111,8 @@ func _run() -> void:
 	await _frames(30)
 
 	# o faro revela a parede falsa
+	for id in ["gallery", "installers", "drivers"]:
+		G.taken["clue:" + id] = true
 	await _room("trash", Vector2(36 * T, 168))
 	for e in get_nodes_in_group("enemy"):
 		if e.global_position.y > 150.0:

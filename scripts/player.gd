@@ -17,6 +17,7 @@ const DASH_TIME := 0.14
 const DASH_COOLDOWN := 0.45
 const FIRE_RATE := 0.13
 const IFRAMES := 0.8
+const SINK_STUN := 0.35      # senão, segurando a direção, cai de novo na hora
 const SNIFF_DRAIN := 35.0     # energia por segundo real farejando
 const SNIFF_REGEN := 14.0
 const SNIFF_MIN := 15.0       # energia mínima para começar a farejar
@@ -34,6 +35,7 @@ var _iframes := 0.0
 var _recoil := 0.0
 var _air_dash := true
 var _scent_t := 0.0
+var _stun := 0.0
 var _sheet: Texture2D
 
 
@@ -53,6 +55,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	var dir := Input.get_axis("left", "right")
+	if _stun > 0.0:
+		_stun -= delta
+		dir = 0.0
 	if dir != 0.0:
 		facing = signi(int(signf(dir)))
 
@@ -141,7 +146,7 @@ func _update_sniff(delta: float) -> void:
 		if _scent_t <= 0.0:
 			_play_scent()
 	else:
-		sniff_energy = minf(sniff_energy + SNIFF_REGEN * real, 100.0)
+		sniff_energy = minf(sniff_energy + SNIFF_REGEN * real, Game.max_sniff())
 	Game.sniff = sniff_energy
 
 
@@ -155,18 +160,30 @@ func _play_scent() -> void:
 		if d < nearest:
 			nearest = d
 			kind = e.sound_kind
-	for secret in stage.hidden_walls() + stage.chips:
-		var d := global_position.distance_to(secret)
+	for scent in stage.scents():
+		var d := global_position.distance_to(scent[1])
 		# segredo tem preferência sobre bug à mesma distância
 		if d * 0.7 < nearest:
 			nearest = d * 0.7
-			kind = "secret"
+			kind = scent[0]
 	if kind == "":
 		_scent_t = 0.3
 		return
 	var near := clampf(1.0 - nearest / 280.0, 0.0, 1.0)
 	_scent_t = lerpf(0.75, 0.2, near)
 	Sound.play("scent_" + kind, lerpf(0.8, 1.4, near))
+
+
+## Setor ruim: machuca e devolve ao último chão firme.
+func sink(to: Vector2) -> void:
+	_iframes = 0.0  # nem o dash atravessa um setor ruim
+	take_damage(1, global_position)
+	Sound.play("hazard")
+	if hp > 0:
+		global_position = to
+		velocity = Vector2.ZERO
+		_dash_t = 0.0
+		_stun = SINK_STUN
 
 
 func heal(amount: int) -> void:
