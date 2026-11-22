@@ -8,12 +8,32 @@ confira os links no fim antes de cada envio.
 | Objetivo | Situação |
 |---|---|
 | Página "Em breve" | **Material pronto.** Dependem de você: conta, taxa, nome, contato de suporte e respostas do questionário |
-| Demo (Windows e Linux) | **Builds prontos, ainda não envie:** o bot leva 5 min 30 s pela região inteira, e a duração para quem joga pela primeira vez (meta: 15 a 20) ainda não foi medida com pessoas (roteiro em docs/PLAYTEST.md). Os builds nunca foram abertos nesses sistemas: o CI faz isso no primeiro push |
+| Demo (Windows e Linux) | **Builds prontos, ainda não envie:** o bot leva 5 min 30 s pela região inteira, e a duração para quem joga pela primeira vez (meta: 15 a 20) ainda não foi medida com pessoas (roteiro em docs/PLAYTEST.md). O CI passou em Windows e Linux (8f162a3) e os builds abrem neles; nunca foram jogados num computador real com esses sistemas |
 | Demo (macOS) | **Bloqueada:** falta notarizar (conta Apple Developer, paga à parte) |
 | Jogo completo, pago | **Não está pronto.** Existe 1 das 5 regiões do GDD. A análise compara o build com a página e recusa jogo incompleto vendido como completo |
 
 O caminho que fecha com o que existe hoje: página "Em breve", demo, Next Fest e
 produção das regiões 2 a 5. O lançamento vem depois.
+
+## TODO antes de enviar
+
+**Adiado por decisão (22/11/2026), fazer antes da página:**
+
+- [ ] **Trailer com bitrate alto.** Saiu com 1.452 kbps; a Steam pede
+      [5.000 ou mais](https://partner.steamgames.com/doc/store/trailer) e o
+      preset dela usa 20 Mbps. `tools/encode_trailer.swift` pede 12 Mbps como
+      média e o codificador não chega lá com pixel art: forçar a taxa e
+      **conferir o arquivo**. Depois, regerar o vídeo de divulgação e rodar
+      `tools/make_site.py` para o site pegar o novo.
+
+**Depois:**
+
+- [ ] Decidir se o repositório fica público: hoje qualquer um compila o jogo.
+      Privado, o GitHub Pages para no plano gratuito, então o site (`index.html`,
+      `404.html`, `site/`) teria de ir para um repositório público só dele.
+- [ ] Com a página no ar: trocar "Planned for Steam" no site pelo botão de
+      wishlist e tirar "working title".
+- [ ] Opcional: wishlist na tela de fim da demo (precisa do App ID e do SDK).
 
 ## 1. Só você pode fazer
 
@@ -124,6 +144,7 @@ exige o SDK da Steam.
 | Trailer de gameplay, 38 s | `builds/trailer/` (`tools/make_trailer.sh`) |
 | Vídeo de divulgação, 33 s, 16:9 e 9:16 | `builds/promo/` (`tools/make_promo.sh`). Para redes; na Steam, só como trailer secundário |
 | Textos em inglês e português | [LOJA.md](LOJA.md) |
+| Site em inglês, para o kit de imprensa e o campo de site | <https://saulofilho.github.io/hound-exe/> (`tools/make_site.py`) |
 
 Marque as capturas e o trailer como gameplay e para todas as idades.
 
@@ -178,7 +199,7 @@ O pedido de análise de compatibilidade só abre depois da análise do build.
 - [ ] Instalar pela Steam e jogar 5 minutos pelo botão Jogar (item obrigatório
       do checklist, válido por 7 dias).
 - [ ] Testar o Cloud em dois computadores, se marcado.
-- [ ] Conferir que página, capturas e trailer só mostram o que está no build.
+- [ ] Conferir que site, página, capturas e trailer só mostram o que está no build.
 
 ## Fontes
 

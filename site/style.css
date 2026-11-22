@@ -1,0 +1,393 @@
+/* Hound.exe: só preto, branco e um destaque, como no jogo.
+   A fonte pixel fica nítida em múltiplos de 11px; texto corrido usa a do sistema. */
+
+@font-face {
+  font-family: "Hound Pixel";
+  src: url("media/hound-pixel.ttf") format("truetype");
+  font-display: swap;
+}
+
+:root {
+  --black: #000;
+  --white: #f3f3ee;
+  --mid: #9a9a95;
+  --dim: #2c2c2e;
+  --shade: #19191b;
+  --accent: #2fb5a8;
+  --pixel: "Hound Pixel", ui-monospace, monospace;
+  --body: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --bar: 52px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-bottom: var(--bar);
+}
+
+body {
+  margin: 0;
+  padding-bottom: calc(var(--bar) + env(safe-area-inset-bottom, 0px));
+  color: var(--white);
+  background: var(--black) radial-gradient(var(--dim) 1px, transparent 1.5px) 0 0 / 24px 24px;
+  font: 16px/1.65 var(--body);
+  transition: background-color .15s;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-family: var(--pixel);
+  font-weight: 400;
+  -webkit-font-smoothing: none;
+  line-height: 1.1;
+}
+
+h2 { font-size: 55px; margin-bottom: 24px; text-wrap: balance; }
+h3 { font-size: 33px; margin-bottom: 10px; }
+p { margin: 0; }
+a { color: var(--accent); }
+img, video { display: block; max-width: 100%; height: auto; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+main, .foot {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding-inline: 20px;
+}
+
+.skip { position: absolute; left: -999px; top: 8px; z-index: 30; padding: 8px 12px; background: var(--white); color: var(--black); }
+.skip:focus { left: 8px; }
+.narrow { display: none; }
+
+/* ---- janelas e botões */
+
+.window {
+  position: relative;
+  display: block;
+  min-width: 0;
+  margin: 0;
+  background: var(--black);
+  border: 2px solid var(--white);
+  box-shadow: 5px 5px 0 var(--dim);
+}
+
+.titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 8px;
+  background: var(--white);
+  color: var(--black);
+  font: 22px/1.2 var(--pixel);
+}
+
+.titlebar span { overflow-wrap: anywhere; }
+
+.titlebar i {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--black);
+  background:
+    linear-gradient(45deg, transparent 42%, var(--black) 42% 58%, transparent 58%),
+    linear-gradient(-45deg, transparent 42%, var(--black) 42% 58%, transparent 58%);
+}
+
+.pad { padding: 22px; }
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 6px 18px;
+  border: 2px solid var(--white);
+  border-right-width: 4px;
+  border-bottom-width: 4px;
+  background: var(--black);
+  color: var(--white);
+  font: 22px/1.2 var(--pixel);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button.primary { background: var(--white); color: var(--black); }
+.button:hover, .button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--black); }
+
+/* ---- sprites: folhas horizontais de --n quadros, --i é o quadro */
+
+.spr {
+  --n: 1;
+  --i: 0;
+  display: block;
+  background-repeat: no-repeat;
+  background-size: calc(var(--n) * 100%) 100%;
+  background-position-x: calc(var(--i) * 100% / (var(--n) - 1));
+  image-rendering: pixelated;
+}
+
+/* ---- abertura */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: 44px;
+  min-height: calc(100svh - var(--bar));
+  padding-block: 56px;
+}
+
+.intro { min-width: 0; }
+
+.status {
+  display: inline-block;
+  margin-bottom: 22px;
+  padding: 2px 10px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font: 22px/1.2 var(--pixel);
+}
+
+h1 { font-size: 110px; line-height: .9; }
+h1 span { color: var(--accent); }
+.tagline { margin: 18px 0; font: 44px/1.1 var(--pixel); }
+.lead { max-width: 54ch; color: var(--mid); }
+.actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+
+/* a cena: 256 x 160 pixels de jogo, em porcentagem */
+.scene {
+  position: relative;
+  aspect-ratio: 256 / 160;
+  overflow: hidden;
+}
+
+.scene > b { position: absolute; }
+.scene .spr { width: 6.25%; height: 10%; }
+
+.scene .deco { width: 9.375%; height: 15%; background-image: url("media/icons.png"); --n: 6; opacity: .18; }
+.icon-folder { left: 7%; top: 9%; }
+.icon-page { left: 42%; top: 25%; --i: 1; }
+.icon-bin { left: 84%; top: 10%; --i: 4; }
+
+.plat {
+  width: 25%;
+  height: 8.75%;
+  border: 2px solid var(--white);
+  background: linear-gradient(var(--white) 38%, var(--black) 38%);
+}
+.p1 { left: 6%; top: 58%; }
+.p2 { left: 50%; top: 50%; }
+
+.secret {
+  width: 17%;
+  height: 8%;
+  border: 2px solid var(--accent);
+  background: radial-gradient(var(--accent) 1.5px, transparent 2px) 0 0 / 12px 100%;
+  visibility: hidden;
+}
+.s1 { left: 27%; top: 39%; }
+.s2 { left: 12%; top: 22%; }
+
+.scene .backup { left: 17%; top: 12%; --n: 11; --i: 10; background-image: url("media/items.png"); }
+.scene .spam { left: 69%; top: 18%; --n: 3; background-image: url("media/spam.png"); animation: two-of-three .3s steps(2) infinite, hover 3s ease-in-out infinite; }
+.scene .turret { left: 15%; top: 48%; --n: 2; background-image: url("media/turret.png"); animation: two .9s steps(2) infinite; }
+.scene .walker { left: 59%; top: 40%; --n: 4; background-image: url("media/walker.png"); animation: four .7s steps(4) infinite; }
+.scene .ghost { left: 79%; top: 68.5%; width: 12.5%; height: 22.5%; --n: 5; --i: 1; background-image: url("media/ghost.png"); animation: hover 2.4s ease-in-out infinite; }
+.scene .dog { left: 25%; top: 81%; width: 9.375%; height: 10%; --n: 14; background-image: url("media/hound.png"); }
+
+.trail {
+  left: 36%;
+  top: 88%;
+  width: 42%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent) 5px, transparent 5px) 0 0 / 18px 100%;
+  visibility: hidden;
+}
+
+.ground {
+  inset: 91% 0 0;
+  border-top: 2px solid var(--white);
+  background: var(--shade) radial-gradient(var(--dim) 1px, transparent 1.5px) 0 0 / 8px 8px;
+}
+
+.hint { padding: 9px 12px; border-top: 2px solid var(--white); color: var(--mid); font-size: 14px; }
+kbd { padding: 0 5px; border: 1px solid var(--mid); color: var(--white); font: inherit; }
+.hint strong { color: var(--accent); }
+
+@keyframes four { from { background-position-x: 0; } to { background-position-x: 133.3333%; } }
+@keyframes two { from { background-position-x: 0; } to { background-position-x: 200%; } }
+@keyframes two-of-three { from { background-position-x: 0; } to { background-position-x: 100%; } }
+@keyframes nose { from { background-position-x: 69.2308%; } to { background-position-x: 84.6154%; } }
+@keyframes hover { 50% { translate: 0 -10%; } }
+
+/* ---- seções */
+
+.section { position: relative; padding-block: 64px; }
+.sub { max-width: 64ch; margin: -8px 0 30px; color: var(--mid); }
+video { width: 100%; aspect-ratio: 16 / 9; background: var(--black); }
+
+.feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 36px;
+  margin-top: 44px;
+}
+.feature.flip { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); }
+.feature.flip > .window { order: 2; }
+.feature p { color: var(--mid); }
+
+.wings, .bugs { display: grid; gap: 24px; margin: 0; padding: 0; list-style: none; }
+.wings { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wings p, .bugs p { color: var(--mid); }
+
+.ico { width: 72px; height: 72px; margin-bottom: 16px; --n: 6; background-image: url("media/icons.png"); }
+.ico-page { --i: 1; }
+.ico-drive { --i: 2; }
+.ico-down { --i: 3; }
+
+.bugs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.bugs li { padding: 20px; border: 2px solid var(--dim); background: var(--black); }
+.bugs .spr { width: 96px; height: 96px; margin: 0 auto 14px; }
+.bug-walker { --n: 4; background-image: url("media/walker.png"); animation: four .7s steps(4) infinite; }
+.bug-turret { --n: 2; background-image: url("media/turret.png"); animation: two .9s steps(2) infinite; }
+.bug-spam { --n: 3; background-image: url("media/spam.png"); animation: two-of-three .3s steps(2) infinite; }
+.bug-chaser { --n: 2; background-image: url("media/chaser.png"); animation: two .3s steps(2) infinite; }
+
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px; }
+figcaption { padding: 5px 10px; border-top: 2px solid var(--white); font: 22px/1.2 var(--pixel); }
+
+.props { margin: 0; padding: 12px 22px; }
+.props div { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 4px 18px; padding-block: 10px; }
+.props div + div { border-top: 1px dotted var(--dim); }
+.props dt { color: var(--accent); font: 22px/1.3 var(--pixel); }
+.props dd { margin: 0; }
+
+.trash .pad { display: flex; align-items: center; gap: 28px; }
+.trash h2 { color: var(--accent); margin-bottom: 8px; }
+.ghost-down { flex: none; width: 96px; height: 108px; --n: 5; --i: 3; background-image: url("media/ghost.png"); }
+
+.foot { padding-block: 36px 48px; color: var(--mid); font-size: 14px; }
+.foot strong { color: var(--white); }
+
+/* ---- pistas: enterradas até farejar */
+
+.clue {
+  position: absolute;
+  z-index: 5;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 2px dashed var(--accent);
+  background: var(--black) url("media/items.png") 90% 50% / 528px 48px no-repeat;
+  image-rendering: pixelated;
+  cursor: pointer;
+  visibility: hidden;
+}
+.sniffing .clue:not(.found) { visibility: visible; animation: hover 1s ease-in-out infinite; }
+.clue-a { right: 4%; top: 34%; }
+.clue-b { right: 24px; top: 58px; }
+.clue-c { right: 24px; top: 48px; }
+
+/* ---- farejando */
+
+.sniffing { background-color: #041413; }
+.sniffing .secret, .sniffing .trail { visibility: visible; }
+.sniffing .dog { animation: nose .22s steps(2) infinite; }
+.sniffing .scene .ghost { --i: 0; }
+.sniffing .walker, .sniffing .turret, .sniffing .scene .spam { animation-duration: 1.4s; }
+.sniffing .window { box-shadow: 5px 5px 0 #0d3b37; }
+
+/* ---- barra de tarefas */
+
+.taskbar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: calc(var(--bar) + env(safe-area-inset-bottom, 0px));
+  padding: 0 max(8px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(8px, env(safe-area-inset-left, 0px));
+  border-top: 2px solid var(--white);
+  background: var(--black);
+  font: 22px/1 var(--pixel);
+}
+
+.taskbar a, .sniff {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 11px;
+  color: var(--white);
+  text-decoration: none;
+}
+.start, .sniff { border: 2px solid var(--white); }
+.start-dog { width: 24px; height: 16px; --n: 14; background-image: url("media/hound.png"); }
+.task:hover { color: var(--accent); }
+
+.tray { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.pips { display: flex; gap: 6px; }
+.pips i { width: 14px; height: 14px; border: 2px solid var(--mid); }
+.pips i.on { border-color: var(--accent); background: var(--accent); }
+
+.sniff { background: var(--black); color: var(--accent); border-color: var(--accent); font: inherit; cursor: pointer; }
+.sniff[aria-pressed="true"] { background: var(--accent); color: var(--black); }
+
+.toast {
+  position: fixed;
+  z-index: 25;
+  left: 50%;
+  bottom: calc(var(--bar) + 14px);
+  translate: -50% 0;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 6px 16px;
+  border: 2px solid var(--white);
+  background: var(--black);
+  font: 22px/1.2 var(--pixel);
+  text-align: center;
+}
+.toast:empty { clip-path: inset(50%); }
+
+/* ---- telas menores */
+
+@media (max-width: 960px) {
+  .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-top: 36px; }
+  .feature, .feature.flip { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .feature.flip > .window { order: 0; }
+  .bugs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wings { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 680px) {
+  h1 { font-size: 66px; }
+  h2 { font-size: 44px; }
+  .pair { grid-template-columns: minmax(0, 1fr); }
+  .task { display: none !important; }
+  .props div { grid-template-columns: minmax(0, 1fr); }
+  .section { padding-block: 44px; }
+  .titlebar { font-size: 22px; }
+  .trash .pad { flex-wrap: wrap; }
+  .clue-b, .clue-c { top: -12px; right: 12px; }  /* no respiro entre seções, fora do título */
+}
+
+@media (max-width: 420px) {
+  h1 { font-size: 55px; }
+  .narrow { display: inline; }
+  .bugs { grid-template-columns: minmax(0, 1fr); }
+  .actions .button { width: 100%; }
+  .status { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .sniffing .dog { --i: 9; }
+}

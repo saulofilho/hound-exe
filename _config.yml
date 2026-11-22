@@ -1,0 +1,19 @@
+# GitHub Pages publica a raiz da main. O site é index.html, 404.html e site/;
+# o resto do repositório não vai para o endereço público do jogo.
+# docs/moodboard.html continua no ar, como já estava.
+title: Hound.exe
+exclude:
+  - README.md
+  - README.pt-BR.md
+  - scripts
+  - tests
+  - tools
+  - steam
+  - audio
+  - art
+  - builds
+  - docs/GDD.md
+  - docs/PLAYTEST.md
+  - project.godot
+  - export_presets.cfg
+  - "*.tscn"

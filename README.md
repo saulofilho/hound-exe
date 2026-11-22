@@ -1,6 +1,6 @@
 # Hound.exe
 
-**English** · [Português](README.pt-BR.md)
+**English** · [Português](README.pt-BR.md) · [Website](https://saulofilho.github.io/hound-exe/)
 
 A 1-bit action metroidvania starring the hound from
 [scopehound](https://github.com/saulofilho/scopehound). The hound breaks into
@@ -176,7 +176,11 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] An ending for the demo
 - [x] Windows, Linux and macOS export; SteamPipe scripts
 - [x] Store art, screenshots, gameplay trailer and store text
-- [ ] First green CI run on Windows and Linux (`.github/workflows/tests.yml`)
+- [x] English website for GitHub Pages
+- [ ] **TODO (deferred):** re-encode the trailer at 5,000+ kbps as Steam asks (it is 1,452 today)
+- [ ] Decide whether the repository stays public before selling
+- [ ] Swap the website's "Planned for Steam" for a wishlist button once the page is live
+- [x] First green CI run on Windows and Linux (`.github/workflows/tests.yml`)
 - [ ] Run on real Windows, Linux, Steam Deck and a physical gamepad
 - [ ] macOS notarization
 - [ ] Steamworks account, store page review, demo review
@@ -354,6 +358,22 @@ survey) is in [steam/PUBLICAR.md](steam/PUBLICAR.md) (Portuguese).
 godot --headless --fixed-fps 60 --path . -s tests/steam.gd
 ```
 
+## Website
+
+<https://saulofilho.github.io/hound-exe/> is served by GitHub Pages from the
+root of `main`: `index.html`, `404.html` and `site/`. `_config.yml` keeps code,
+tests, the design document and publishing notes off that address.
+
+```bash
+python3 tools/make_site.py   # font, sprites, screenshots, social image, video
+python3 -m http.server 8847 --bind 127.0.0.1   # preview at localhost:8847
+```
+
+Regenerate after changing the art, the store screenshots or the promo video.
+The site's copy is hand-written in `index.html` and, like the store text, must
+only promise what is in the build. Holding sniff on the page reveals three
+clues, as in the game.
+
 ## Project layout
 
 ```
@@ -401,6 +421,8 @@ tools/make_audio.py  synthesizer and scores
 tools/run_tests.py every test, in a throwaway user folder
 tools/playtest_report.py turns testers' saves into numbers
 .github/workflows tests and boot checks on Windows and Linux
+index.html, site/ the website
+tools/make_site.py generates the website's media
 tools/check_rooms.py reachability proof over the maps
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images

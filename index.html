@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Hound.exe: a 1-bit action metroidvania</title>
+  <meta name="description" content="Good dog. Bad files. Shoot, dash and sniff your way through an infected computer in a 1-bit action metroidvania. In development, planned for Steam.">
+  <link rel="canonical" href="https://saulofilho.github.io/hound-exe/">
+  <meta name="theme-color" content="#000000">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Hound.exe">
+  <meta property="og:title" content="Hound.exe: Good dog. Bad files.">
+  <meta property="og:description" content="A 1-bit action metroidvania inside an infected computer. Shoot fast, sniff smart.">
+  <meta property="og:url" content="https://saulofilho.github.io/hound-exe/">
+  <meta property="og:image" content="https://saulofilho.github.io/hound-exe/site/media/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The hound shooting at the Ghost File under the Hound.exe logo">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" href="site/media/favicon.png">
+  <link rel="preload" href="site/media/hound-pixel.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="site/style.css">
+  <script src="site/sniff.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<main id="main">
+
+  <header class="hero" id="top">
+    <div class="intro">
+      <p class="status">In development &middot; Planned for Steam</p>
+      <h1>HOUND<span>.EXE</span></h1>
+      <p class="tagline">Good dog. <br class="narrow">Bad files.</p>
+      <p class="lead">A 1-bit action metroidvania inside an infected computer. You are a sniffer dog with a debugger for a blaster. Run, dash and shoot through the folders, and follow your nose to what the system is hiding.</p>
+      <div class="actions">
+        <a class="button primary" href="#trailer">Watch the trailer</a>
+        <button class="button needs-js" type="button" data-sniff aria-pressed="false" hidden>Try sniffing this page</button>
+      </div>
+    </div>
+
+    <div class="window stage">
+      <div class="titlebar"><span>C:\Documents</span><i aria-hidden="true"></i></div>
+      <div class="scene" role="img" aria-label="The hound on a desktop of window platforms, facing a bug, winged Spam and the Ghost File. Sniffing reveals hidden platforms.">
+        <b class="spr deco icon-folder"></b>
+        <b class="spr deco icon-page"></b>
+        <b class="spr deco icon-bin"></b>
+        <b class="plat p1"></b>
+        <b class="plat p2"></b>
+        <b class="secret s1"></b>
+        <b class="secret s2"></b>
+        <b class="spr backup"></b>
+        <b class="spr spam"></b>
+        <b class="spr turret"></b>
+        <b class="spr walker"></b>
+        <b class="spr ghost"></b>
+        <b class="spr dog"></b>
+        <b class="trail"></b>
+        <b class="ground"></b>
+      </div>
+      <p class="hint needs-js" hidden>Hold <kbd>Shift</kbd> or press <strong>SNIFF</strong>. Three clues are buried on this page.</p>
+      <button class="clue clue-a" type="button" data-clue="a" aria-label="Dig up a clue"></button>
+    </div>
+  </header>
+
+  <section id="trailer" class="section" aria-labelledby="trailer-title">
+    <h2 id="trailer-title">See it run</h2>
+    <div class="window">
+      <div class="titlebar"><span>trailer.exe</span><i aria-hidden="true"></i></div>
+      <video controls playsinline preload="none" width="1920" height="1080"
+             poster="site/media/shot-quarantine.png"
+             aria-label="Hound.exe trailer, 33 seconds of gameplay with English on-screen captions">
+        <source src="site/media/promo.mp4" type="video/mp4">
+        <a href="site/media/promo.mp4">Download the trailer (MP4)</a>
+      </video>
+    </div>
+  </section>
+
+  <section id="game" class="section" aria-labelledby="game-title">
+    <h2 id="game-title">Shoot fast. Sniff smart.</h2>
+
+    <article class="feature">
+      <div class="window"><img src="site/media/shot-hidden.png" width="1920" height="1080" loading="lazy" alt="Sniffing outlines hidden files that become platforms in C:\Pictures"></div>
+      <div>
+        <h3>Your nose is a key</h3>
+        <p>Hold sniff and time slows down. Hidden files turn solid, fake walls give way, buried clues surface and every bug shows where it hurts. Shots at a weak point deal double damage.</p>
+      </div>
+    </article>
+
+    <article class="feature flip">
+      <div class="window"><img src="site/media/shot-quarantine.png" width="1920" height="1080" loading="lazy" alt="A quarantine gate locks the hound in with bugs and winged Spam"></div>
+      <div>
+        <h3>Break quarantine</h3>
+        <p>Walk into the wrong folder and the gates slam shut. Clear the waves of bugs to get out, and the shortcut home unlocks behind you.</p>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="window"><img src="site/media/shot-laser.png" width="1920" height="1080" loading="lazy" alt="Window platforms and a laser barrier in C:\Documents"></div>
+      <div>
+        <h3>New tools, old places</h3>
+        <p>The dash chip is more than a dodge. It carries you through lasers and across bad sectors, back into folders that turned you away before.</p>
+      </div>
+    </article>
+
+    <article class="feature flip">
+      <div class="window"><img src="site/media/shot-arena.png" width="1920" height="1080" loading="lazy" alt="The top-down arena: bugs close in while a sector corrupts under the hound"></div>
+      <div>
+        <h3>Two points of view</h3>
+        <p>Go deep into a process and the camera flips overhead for a 45-second twin-stick fight. The floor corrupts wherever you stop, so never stand still.</p>
+      </div>
+    </article>
+  </section>
+
+  <section id="world" class="section" aria-labelledby="world-title">
+    <h2 id="world-title">The first region: Desktop</h2>
+    <p class="sub">Eleven interconnected rooms, where windows are platforms and folders are doors. Explore three wings to find three clues. The door at the end of the Trash will not open without them.</p>
+    <ol class="wings">
+      <li class="window">
+        <div class="titlebar"><span>C:\Pictures</span><i aria-hidden="true"></i></div>
+        <div class="pad"><b class="spr ico ico-page" aria-hidden="true"></b><h3>Hidden files</h3><p>Platforms that only exist for seven seconds after you sniff them.</p></div>
+      </li>
+      <li class="window">
+        <div class="titlebar"><span>C:\Temp</span><i aria-hidden="true"></i></div>
+        <div class="pad"><b class="spr ico ico-down" aria-hidden="true"></b><h3>Temporary files</h3><p>Footing that blinks in and out above a floor of bad sectors.</p></div>
+      </li>
+      <li class="window">
+        <div class="titlebar"><span>C:\System32</span><i aria-hidden="true"></i></div>
+        <div class="pad"><b class="spr ico ico-drive" aria-hidden="true"></b><h3>Protected files</h3><p>Gaps and lasers that take both your dash and your nose.</p></div>
+      </li>
+    </ol>
+    <button class="clue clue-b" type="button" data-clue="b" aria-label="Dig up a clue"></button>
+  </section>
+
+  <section id="bugs" class="section" aria-labelledby="bugs-title">
+    <h2 id="bugs-title">Known issues</h2>
+    <p class="sub">The bugs are very real.</p>
+    <ul class="bugs">
+      <li><b class="spr bug-walker" aria-hidden="true"></b><h3>Crawler</h3><p>Patrols every ledge it can stand on.</p></li>
+      <li><b class="spr bug-turret" aria-hidden="true"></b><h3>Pop-up</h3><p>Stays put and fires. The eye warns you first.</p></li>
+      <li><b class="spr bug-spam" aria-hidden="true"></b><h3>Spam</h3><p>Shakes, shows its line, then dives.</p></li>
+      <li><b class="spr bug-chaser" aria-hidden="true"></b><h3>Swarm</h3><p>Closes in from every side of a process.</p></li>
+    </ul>
+  </section>
+
+  <section id="boss" class="section" aria-labelledby="boss-title">
+    <h2 id="boss-title">The Ghost File</h2>
+    <p class="sub">Something in the Trash refuses to be deleted. It turns intangible, charges and copies itself. Only your nose knows which one is real.</p>
+    <div class="pair">
+      <figure class="window"><img src="site/media/shot-copies.png" width="1920" height="1080" loading="lazy" alt="Three identical Ghost Files, each with a warning line across the room"><figcaption>Three files. One is real.</figcaption></figure>
+      <figure class="window"><img src="site/media/shot-stunned.png" width="1920" height="1080" loading="lazy" alt="The stunned Ghost File on the floor while the hound opens fire"><figcaption>It crashed. Open fire.</figcaption></figure>
+    </div>
+    <button class="clue clue-c" type="button" data-clue="c" aria-label="Dig up a clue"></button>
+  </section>
+
+  <section id="shots" class="section" aria-labelledby="shots-title">
+    <h2 id="shots-title">One machine. One color.</h2>
+    <p class="sub">Black, white and a single accent, reserved for what you can play with. The original chiptune score tightens as the bugs get close.</p>
+    <div class="pair">
+      <a class="window" href="site/media/shot-shoot.png"><img src="site/media/shot-shoot.png" width="1920" height="1080" loading="lazy" alt="The hound shooting bugs in C:\Documents"></a>
+      <a class="window" href="site/media/shot-sniff.png"><img src="site/media/shot-sniff.png" width="1920" height="1080" loading="lazy" alt="A scent trail leads to a fake wall in C:\Trash"></a>
+    </div>
+  </section>
+
+  <section id="info" class="section" aria-labelledby="info-title">
+    <h2 id="info-title">System properties</h2>
+    <div class="window">
+      <div class="titlebar"><span>hound.exe properties</span><i aria-hidden="true"></i></div>
+      <dl class="props">
+        <div><dt>Genre</dt><dd>Action metroidvania, single player</dd></div>
+        <div><dt>Status</dt><dd>In development. The first region is playable and heading into playtests.</dd></div>
+        <div><dt>Platforms</dt><dd>Planned for Steam on Windows and Linux</dd></div>
+        <div><dt>Controls</dt><dd>Gamepad or keyboard, both remappable</dd></div>
+        <div><dt>Languages</dt><dd>English and Brazilian Portuguese</dd></div>
+        <div><dt>Internet</dt><dd>Not needed. No account, no tracking.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="trash" class="section trash" aria-labelledby="trash-title" tabindex="-1" hidden>
+    <div class="window">
+      <div class="titlebar"><span>C:\Trash\~ghost.tmp</span><i aria-hidden="true"></i></div>
+      <div class="pad">
+        <b class="spr ghost-down" aria-hidden="true"></b>
+        <div>
+          <h2 id="trash-title">Good dog.</h2>
+          <p>You found all three clues, and the door at the end of the Trash is open. In the game, this is where the trouble starts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p><strong>HOUND.EXE</strong> (working title) is a game by <a href="https://github.com/saulofilho">saulofilho</a>, starring the hound from <a href="https://saulofilho.github.io/scopehound/en/">scopehound</a>.</p>
+  <p>Made with Godot Engine. This site sets no cookies and loads nothing from third parties.</p>
+</footer>
+
+<nav class="taskbar" aria-label="Sections">
+  <a class="start" href="#top"><b class="spr start-dog" aria-hidden="true"></b>HOUND</a>
+  <a class="task" href="#trailer">Trailer</a>
+  <a class="task" href="#game">Game</a>
+  <a class="task" href="#world">World</a>
+  <a class="task" href="#boss">Boss</a>
+  <a class="task" href="#info">Info</a>
+  <span class="tray needs-js" hidden>
+    <span class="pips" aria-hidden="true"><i></i><i></i><i></i></span>
+    <button class="sniff" type="button" data-sniff aria-pressed="false">SNIFF</button>
+  </span>
+</nav>
+<p class="toast" role="status" aria-live="polite"></p>
+</body>
+</html>

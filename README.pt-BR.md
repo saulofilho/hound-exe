@@ -81,6 +81,21 @@ Depois de clonar, importe uma vez antes de rodar:
 | Pausar | Esc | Start |
 | Voltar ao ponto de restauração | segurar R (um toque na tela azul) | menu de pausa |
 
+### Site
+
+<https://saulofilho.github.io/hound-exe/>, em inglês, sai da raiz da `main` pelo
+GitHub Pages: `index.html`, `404.html` e `site/`. O `_config.yml` tira código,
+GDD e guia de publicação desse endereço. Depois de mudar arte, capturas da loja
+ou vídeo de divulgação, rode `python3 tools/make_site.py`.
+
+### Pendências da Steam
+
+- [ ] **Adiado:** regerar o trailer com 5.000 kbps ou mais (hoje tem 1.452).
+- [ ] Decidir se o repositório fica público antes de vender.
+- [ ] Pôr o botão de wishlist no site quando a página existir.
+
+A lista completa está em [steam/PUBLICAR.md](steam/PUBLICAR.md).
+
 ### Playtest
 
 O save conta tempo, mortes e desistências por sala. Não identifica ninguém e o
