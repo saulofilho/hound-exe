@@ -75,7 +75,7 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_released("jump") and velocity.y < 0.0:
 			velocity.y *= JUMP_CUT
 
-		if Input.is_action_just_pressed("dash") and _dash_cd == 0.0 and (is_on_floor() or _air_dash):
+		if Input.is_action_just_pressed("dash") and Game.abilities.dash and _dash_cd == 0.0 and (is_on_floor() or _air_dash):
 			_dash_t = DASH_TIME
 			_dash_cd = DASH_COOLDOWN
 			_iframes = maxf(_iframes, DASH_TIME)
@@ -86,6 +86,8 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("shoot") and _fire_cd == 0.0:
 		_shoot()
 
+	# lasers (camada 5) só deixam passar durante o dash
+	collision_mask = 1 if _dash_t > 0.0 else 1 | 16
 	move_and_slide()
 	_check_contact_damage()
 	queue_redraw()
@@ -123,6 +125,10 @@ func heal(amount: int) -> void:
 
 
 func _check_contact_damage() -> void:
+	if _dash_t <= 0.0 and "lasers" in get_parent():
+		for l in get_parent().lasers:
+			if absf(global_position.x - l.x) < 14.0 and absf(global_position.y + 2.0 - l.y) < 14.0:
+				take_damage(1, l)
 	for e in get_tree().get_nodes_in_group("enemy"):
 		if global_position.distance_to(e.global_position) < 13.0:
 			take_damage(1, e.global_position)
@@ -138,7 +144,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	main.add_shake(4.0)
 	main.hitstop(0.06)
 	if hp <= 0:
-		main.show_banner("TELA AZUL\n\nUm erro fatal ocorreu no hound.exe.\nPressione R para reiniciar.", Color(0.45, 0.6, 1.0))
+		main.show_banner("TELA AZUL\n\nUm erro fatal ocorreu no hound.exe.\nR volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
 		set_physics_process(false)
 		visible = false
 

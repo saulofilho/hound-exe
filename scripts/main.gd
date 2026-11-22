@@ -1,85 +1,75 @@
 extends Stage
-## Corredor lateral montado a partir de um mapa ASCII.
-## Legenda: # parede · F parede falsa (só o faro revela) · P cão · w bug que anda
-##          t torreta · H patch de vida · D porta para a sala de cima
+## Sala lateral da região: monta a sala atual (Game.room) a partir de Rooms.DATA
+## e cuida de saídas, itens, laser, ponto de restauração, porta e Explorer.
 
-const MAP := [
-	"########################################################################",
-	"#...................................................................#..#",
-	"#...................................................................#..#",
-	"#...................................................................#..#",
-	"#...........................................###.....................#..#",
-	"#...................................................................#..#",
-	"#...................................t.....................####......#..#",
-	"#.................................#####.............................#..#",
-	"#.......#####.......................................####............#..#",
-	"#.........................####......................................F..#",
-	"#..P............w.........####............w.............w.......t...FHD#",
-	"########################################################################",
-	"########################################################################",
-]
 const WALL := Color(0.36, 0.36, 0.4)
 const WALL_TOP := Color(0.62, 0.62, 0.66)
+const LASER := Color(1.0, 0.2, 0.33)
 
+var MAP: Array = []
+var data: Dictionary
 var player: Player
-var door_pos: Vector2
+var door_pos := Vector2.ZERO
+var restore_pos := Vector2.ZERO
 var patches: Array[Vector2] = []
+var chips: Array[Vector2] = []
 var fake_walls: Array[Vector2] = []
+var lasers: Array[Vector2] = []
 var _leaving := false
+var _door_told := false
+var _map_view: Control
 
 
 func help_text() -> String:
-	return "mover A/D · pular Espaço · atirar J (W p/ cima) · dash K · farejar Shift · R reinicia"
+	return "A/D mover · Espaço pular · J atirar · K dash · Shift farejar · Tab Explorer · R restaurar"
 
 
-# ------------------------------------------------------------------ nível
-
-func is_solid(cell: Vector2i) -> bool:
-	if cell.y < 0 or cell.y >= MAP.size():
-		return true
-	var row: String = MAP[cell.y]
-	if cell.x < 0 or cell.x >= row.length():
-		return true
-	return row[cell.x] == "#"
+func _key(pos: Vector2) -> String:
+	return "%s:%d:%d" % [Game.room, int(pos.x), int(pos.y)]
 
 
-func is_solid_at(pos: Vector2) -> bool:
-	return is_solid(Vector2i(floori(pos.x / TILE), floori(pos.y / TILE)))
-
+# ------------------------------------------------------------------ montagem
 
 func _build_level() -> void:
+	data = Rooms.DATA[Game.room]
+	MAP = data.map
+	Game.visited[Game.room] = true
+	var start := Vector2.ZERO
 	for y in MAP.size():
 		var row: String = MAP[y]
 		var x := 0
 		while x < row.length():
 			if row[x] == "#":
-				# junta paredes vizinhas da mesma linha num único corpo
-				var start := x
+				var s := x
 				while x < row.length() and row[x] == "#":
 					x += 1
-				_add_wall(start, y, x - start)
+				_add_wall(s, y, x - s)
 				continue
 			var at := Vector2(x * TILE + TILE / 2.0, y * TILE + TILE / 2.0)
 			match row[x]:
-				"P":
-					player = Player.new()
-					player.position = at
-					add_child(player)
-				"w":
-					var w := Walker.new()
-					w.position = at
-					add_child(w)
-				"t":
-					var t := Turret.new()
-					t.position = at
-					add_child(t)
-				"F":
-					fake_walls.append(at)
+				"P": start = at
+				"w": _spawn(Walker.new(), at)
+				"t": _spawn(Turret.new(), at)
+				"F": fake_walls.append(at)
+				"R": restore_pos = at
+				"D": door_pos = at
+				"L": _add_laser(at)
 				"H":
-					patches.append(at)
-				"D":
-					door_pos = at
+					if not Game.taken.has(_key(at)):
+						patches.append(at)
+				"A":
+					if not Game.taken.has(_key(at)):
+						chips.append(at)
 			x += 1
+
+	player = Player.new()
+	player.hp = Game.hp
+	if Game.entry.has("pos"):
+		player.position = Game.entry.pos
+		player.velocity = Game.entry.vel
+	else:
+		player.position = start if start != Vector2.ZERO else restore_pos
+	add_child(player)
 
 	camera.limit_left = 0
 	camera.limit_top = 0
@@ -89,6 +79,48 @@ func _build_level() -> void:
 	camera.position_smoothing_speed = 8.0
 	camera.global_position = player.global_position
 	camera.reset_smoothing()
+
+	_map_view = ExplorerView.new()
+	_map_view.visible = false
+
+
+func _ready() -> void:
+	super()
+	hud.get_parent().add_child(_map_view)
+	show_toast(data.name)
+
+
+func _spawn(e: Node2D, at: Vector2) -> void:
+	e.position = at
+	add_child(e)
+
+
+func _add_laser(at: Vector2) -> void:
+	# barreira física (camada 5): o cão só atravessa durante o dash
+	lasers.append(at)
+	var body := StaticBody2D.new()
+	body.collision_layer = 16
+	body.collision_mask = 0
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(TILE, TILE)
+	shape.shape = rect
+	body.position = at
+	body.add_child(shape)
+	add_child(body)
+
+
+func is_solid(cell: Vector2i) -> bool:
+	if cell.y < 0 or cell.y >= MAP.size():
+		return true
+	var row: String = MAP[cell.y]
+	if cell.x < 0 or cell.x >= row.length():
+		return false  # aberturas de saída
+	return row[cell.x] == "#"
+
+
+func is_solid_at(pos: Vector2) -> bool:
+	return is_solid(Vector2i(floori(pos.x / TILE), floori(pos.y / TILE)))
 
 
 # ------------------------------------------------------------------ desenho
@@ -101,10 +133,9 @@ func _draw() -> void:
 				continue
 			var r := Rect2(x * TILE, y * TILE, TILE, TILE)
 			draw_rect(r, WALL)
-			if not is_solid(Vector2i(x, y - 1)):
+			if y > 0 and not is_solid(Vector2i(x, y - 1)):
 				draw_rect(Rect2(r.position, Vector2(TILE, 2)), WALL_TOP)
 
-	# parede falsa: igual às outras, até o faro revelar
 	for c in fake_walls:
 		var r := Rect2(c - Vector2(TILE, TILE) / 2.0, Vector2(TILE, TILE))
 		if sniffing:
@@ -112,23 +143,45 @@ func _draw() -> void:
 		else:
 			draw_rect(r, WALL)
 
+	var t := Time.get_ticks_msec()
+	for l in lasers:
+		var w := 2.0 + float(t / 50 % 3)
+		draw_rect(Rect2(l.x - w / 2.0, l.y - TILE / 2.0, w, TILE), LASER)
+		draw_rect(Rect2(l.x - 4, l.y - TILE / 2.0, 8, 1), LASER)
+
 	for p in patches:
 		draw_rect(Rect2(p - Vector2(1, 4), Vector2(2, 8)), Color.WHITE)
 		draw_rect(Rect2(p - Vector2(4, 1), Vector2(8, 2)), Color.WHITE)
 
-	if door_pos != Vector2.ZERO:
-		draw_rect(Rect2(door_pos - Vector2(6, 8), Vector2(12, 16)), Color.WHITE, false, 1.0)
-		draw_rect(Rect2(door_pos - Vector2(2, 2), Vector2(4, 4)), Color.WHITE)
+	for c in chips:
+		var bob := Vector2(0, -2 if t / 300 % 2 == 0 else 0)
+		draw_rect(Rect2(c - Vector2(5, 4) + bob, Vector2(10, 8)), ACCENT)
+		draw_rect(Rect2(c - Vector2(3, 2) + bob, Vector2(6, 4)), Color.BLACK)
+		for i in 3:
+			draw_rect(Rect2(c + Vector2(-4 + i * 3, 4) + bob, Vector2(1, 2)), ACCENT)
 
-	# rastro do faro: pontos do cão até o segredo mais próximo
-	if sniffing and is_instance_valid(player) and not fake_walls.is_empty():
-		var target: Vector2 = fake_walls[fake_walls.size() - 1]
-		var from := player.global_position
-		var steps := int(from.distance_to(target) / 10.0)
-		var phase := int(Time.get_ticks_msec() / 90) % 3
-		for i in range(1, steps):
-			if (i + phase) % 3 != 0:
-				draw_rect(Rect2(from.lerp(target, float(i) / steps) + Vector2(-1, 4), Vector2(2, 2)), ACCENT)
+	if restore_pos != Vector2.ZERO:
+		# monitor antigo: o ponto de restauração
+		var lit: bool = Game.restore.get("room", "") == Game.room
+		draw_rect(Rect2(restore_pos - Vector2(6, 6), Vector2(12, 9)), Color.WHITE, false, 1.0)
+		draw_rect(Rect2(restore_pos - Vector2(4, 4), Vector2(8, 5)), ACCENT if lit else Color(1, 1, 1, 0.25))
+		draw_rect(Rect2(restore_pos + Vector2(-3, 4), Vector2(6, 4)), Color.WHITE)
+
+	if door_pos != Vector2.ZERO:
+		var open: bool = not Game.taken.has("arena_desktop")
+		draw_rect(Rect2(door_pos - Vector2(6, 8), Vector2(12, 16)), Color.WHITE, false, 1.0)
+		draw_rect(Rect2(door_pos - Vector2(2, 2), Vector2(4, 4)), Color.WHITE if open else ACCENT)
+
+	if sniffing and is_instance_valid(player):
+		var targets := fake_walls + chips
+		if not targets.is_empty():
+			var target: Vector2 = targets[targets.size() - 1]
+			var from := player.global_position
+			var steps := int(from.distance_to(target) / 10.0)
+			var phase := t / 90 % 3
+			for i in range(1, steps):
+				if (i + phase) % 3 != 0:
+					draw_rect(Rect2(from.lerp(target, float(i) / steps) + Vector2(-1, 4), Vector2(2, 2)), ACCENT)
 
 
 func _dashed_rect(r: Rect2, c: Color) -> void:
@@ -143,25 +196,108 @@ func _dashed_rect(r: Rect2, c: Color) -> void:
 # ------------------------------------------------------------------ jogo
 
 func stage_process(_delta: float) -> void:
-	if not is_instance_valid(player):
+	if not is_instance_valid(player) or _leaving:
 		return
-	camera.global_position = player.global_position + Vector2(player.facing * 32, -16)
-	if sniffing:
-		queue_redraw()
+	var pp := player.global_position
+	camera.global_position = pp + Vector2(player.facing * 32, -16)
+	queue_redraw()
+
+	if Input.is_action_just_pressed("map"):
+		_map_view.visible = not _map_view.visible
 
 	for p in patches.duplicate():
-		if player.global_position.distance_to(p) < 10.0:
+		if pp.distance_to(p) < 10.0:
 			patches.erase(p)
+			Game.taken[_key(p)] = true
 			player.heal(1)
-			add_shake(1.5)
+			show_toast("+1 VIDA")
+
+	for c in chips.duplicate():
+		if pp.distance_to(c) < 12.0:
+			chips.erase(c)
+			Game.taken[_key(c)] = true
+			Game.abilities.dash = true
+			add_shake(4.0)
+			show_toast("DASH INSTALADO · K / C / B\natravessa lasers e tiros", 3.5)
+
+	if restore_pos != Vector2.ZERO and pp.distance_to(restore_pos) < 12.0 and player.hp > 0:
+		var fresh: bool = Game.restore.get("room", "") != Game.room
+		player.hp = player.MAX_HP
+		Game.restore = {"room": Game.room, "pos": restore_pos}
+		if fresh:
+			show_toast("PONTO DE RESTAURAÇÃO CRIADO")
+
+	if door_pos != Vector2.ZERO and pp.distance_to(door_pos) < 12.0 and player.hp > 0:
+		if Game.taken.has("arena_desktop"):
+			if not _door_told:
+				_door_told = true
+				show_toast("Processo limpo. O chefe da região vem na próxima etapa.", 3.0)
+		else:
+			_leaving = true
+			Game.hp = player.hp
+			set_sniffing(false)
+			Game.enter_arena(Game.room, door_pos - Vector2(24, 0))
+			return
+	elif door_pos != Vector2.ZERO and pp.distance_to(door_pos) > 40.0:
+		_door_told = false
+
+	_check_exit(pp)
+	hud.text = "VIDA %d/%d   FARO %d%%" % [maxi(player.hp, 0), player.MAX_HP, int(player.sniff_energy)]
+
+
+func _check_exit(pp: Vector2) -> void:
+	var width: float = MAP[0].length() * TILE
+	var side := ""
+	if pp.x < 2.0:
+		side = "left"
+	elif pp.x > width - 2.0:
+		side = "right"
+	if side == "":
+		return
+	var row := floori(pp.y / TILE)
+	for link in data.links:
+		if link.side == side and row >= link.rows[0] - 1 and row <= link.rows[1]:
+			var target: Dictionary = Rooms.DATA[link.to]
+			var tw: float = target.map[0].length() * TILE
+			var x := tw - 10.0 if side == "left" else 10.0
+			_leaving = true
+			Game.hp = player.hp
+			set_sniffing(false)
+			Game.enter(link.to, Vector2(x, pp.y), player.velocity)
+			return
+
+
+# ------------------------------------------------------------------ Explorer
+
+## Mapa das salas visitadas (Tab). Cada sala é um retângulo na grade da região.
+class ExplorerView extends Control:
+	const CELL := Vector2(36, 22)
+
+	func _ready() -> void:
+		size = Vector2(384, 216)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _process(_d: float) -> void:
+		if visible:
 			queue_redraw()
 
-	if not _leaving and player.hp > 0 and player.global_position.distance_to(door_pos) < 12.0:
-		_leaving = true
-		Arena.carry_hp = player.hp
-		set_sniffing(false)
-		get_tree().change_scene_to_file("res://arena.tscn")
-		return
-
-	var enemies := get_tree().get_nodes_in_group("enemy").size()
-	hud.text = "VIDA %d/%d   BUGS %d   FARO %d%%" % [maxi(player.hp, 0), player.MAX_HP, enemies, int(player.sniff_energy)]
+	func _draw() -> void:
+		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.85))
+		var box := Rect2(Vector2(72, 40), Vector2(240, 136))
+		draw_rect(box, Color.WHITE, false, 1.0)
+		draw_rect(Rect2(box.position, Vector2(box.size.x, 10)), Color.WHITE)
+		draw_string(ThemeDB.fallback_font, box.position + Vector2(4, 8), "EXPLORER · " + Rooms.DATA[Game.room].name, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.BLACK)
+		var origin := box.position + Vector2(40, 66)
+		var blink := Time.get_ticks_msec() / 300 % 2 == 0
+		for id in Rooms.DATA:
+			if not Game.visited.has(id):
+				continue
+			var r: Dictionary = Rooms.DATA[id]
+			var screens: int = maxi(1, r.map[0].length() / 24)
+			var rect := Rect2(origin + Vector2(r.grid) * CELL, Vector2(screens * CELL.x - 3, CELL.y - 3))
+			var cur: bool = id == Game.room
+			draw_rect(rect, Stage.ACCENT if cur and blink else Color(0.36, 0.36, 0.4))
+			draw_rect(rect, Color.WHITE, false, 1.0)
+			if Game.restore.get("room", "") == id:
+				draw_rect(Rect2(rect.position + Vector2(3, 3), Vector2(4, 4)), Color.WHITE)
+		draw_string(ThemeDB.fallback_font, box.position + Vector2(6, box.size.y - 6), "[] ponto de restauração · Tab fecha", HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(1, 1, 1, 0.6))

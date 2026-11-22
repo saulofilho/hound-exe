@@ -1,120 +1,177 @@
 extends SceneTree
-## Teste de fumaça: joga o corredor e a sala de cima sozinho e confere o básico.
+## Teste de fumaça: joga a região Área de trabalho sozinho e confere o básico.
 ## Rodar: godot --headless --path . -s tests/smoke.gd
 
-var stage: Node
-var frame := 0
-var log := {}
+const T := 16
 var checks := {}
+var G: Node  # autoload Game (não tem nome global em scripts -s)
 
 
 func _initialize() -> void:
-	stage = load("res://main.tscn").instantiate()
-	root.add_child(stage)
-
-
-func _press(action: String, on: bool) -> void:
-	if on:
-		Input.action_press(action)
-	else:
-		Input.action_release(action)
+	G = root.get_node("Game")
+	_run()
 
 
 func _check(name: String, ok: bool) -> void:
 	checks[name] = ok
 
 
-func _physics_process(_delta: float) -> bool:
-	frame += 1
-	return _corridor() if frame <= 520 else _arena()
+func _frames(n: int) -> void:
+	for i in n:
+		await physics_frame
 
 
-# ---------------------------------------------------------------- corredor
-
-func _corridor() -> bool:
-	var p = stage.player
-	match frame:
-		5:
-			log.start = p.global_position
-			_press("jump", true)
-		20:
-			_check("pulo", log.start.y - p.global_position.y > 20)
-			_press("jump", false)
-		50:
-			_press("right", true)
-		105:
-			_check("corrida", p.global_position.x - log.start.x > 40)
-			_press("right", false)
-			log.bugs = get_nodes_in_group("enemy").size()
-			_press("shoot", true)
-		200:
-			_press("shoot", false)
-			_check("tiro mata bug", get_nodes_in_group("enemy").size() < log.bugs)
-			log.x = p.global_position.x
-			_press("dash", true)
-		203:
-			_press("dash", false)
-		215:
-			_check("dash", p.global_position.x - log.x > 30)
-		230:
-			log.energy = p.sniff_energy
-			_press("sniff", true)
-		260:
-			_check("faro desacelera o tempo", stage.sniffing and Engine.time_scale < 1.0)
-			_check("faro gasta energia", p.sniff_energy < log.energy)
-			var fake: Vector2 = stage.fake_walls[0]
-			_check("parede falsa sem colisão", not stage.is_solid_at(fake))
-			# tiro durante o faro vale dobrado
-			var b := Bullet.new()
-			b.setup(Vector2.RIGHT, true)
-			if stage.sniffing:
-				b.damage = 2
-			_check("tiro dobrado no faro", b.damage == 2)
-			b.free()
-		270:
-			_press("sniff", false)
-		280:
-			_check("faro desliga", not stage.sniffing and Engine.time_scale == 1.0)
-			# leva o cão até a porta: deve marcar a ida para a sala de cima
-			p.global_position = stage.door_pos
-		290:
-			_check("porta leva à sala de cima", stage._leaving and Arena.carry_hp == p.hp)
-	return false
+func _p(action: String, on: bool) -> void:
+	if on:
+		Input.action_press(action)
+	else:
+		Input.action_release(action)
 
 
-# ---------------------------------------------------------------- sala de cima
+func _tap(action: String) -> void:
+	_p(action, true)
+	await _frames(2)
+	_p(action, false)
 
-func _arena() -> bool:
-	if frame == 521:
-		# a porta já trocou a cena: usa a sala de cima que ela abriu
-		var opened := current_scene
-		stage.queue_free()
-		_check("cena da sala de cima aberta", opened is Arena)
-		if opened is Arena:
-			stage = opened
-		else:
-			stage = load("res://arena.tscn").instantiate()
-			root.add_child(stage)
-		return false
-	var h = stage.hound
-	match frame:
-		530:
-			log.t0 = stage.time_left
-			_press("right", true)
-			_press("shoot", true)
-		700:
-			_check("ondas de bugs surgem", stage._wave >= 1)
-			_check("cronômetro anda", stage.time_left < log.t0)
-			_check("cão anda na sala", h.global_position.x > 3 * 16 + 8)
-			_press("right", false)
-		760:
-			_press("shoot", false)
-			stage.time_left = 0.05   # adianta o fim
-		780:
-			_check("sala termina com vitória", stage._over and stage.banner.visible and h.hp > 0)
-			for k in checks:
-				print("%-28s %s" % [k, "ok" if checks[k] else "FALHOU"])
-			var ok := checks.values().all(func(v): return v)
-			print("SMOKE ", "OK" if ok else "FALHOU")
-			return true
-	return false
+
+## Anda numa direção, pulando de tempos em tempos, até chegar à sala `room`.
+func _walk_to_room(dir: String, room: String, max_frames := 900) -> bool:
+	_p(dir, true)
+	for i in max_frames:
+		if i % 40 == 0:
+			_p("jump", true)
+		if i % 40 == 15:
+			_p("jump", false)
+		await physics_frame
+		if G.room == room and current_scene != null and current_scene.get("player") != null:
+			break
+	_p(dir, false)
+	_p("jump", false)
+	await _frames(5)
+	return G.room == room
+
+
+func _teleport(room: String, pos: Vector2) -> void:
+	G.enter(room, pos)
+	await _frames(5)
+
+
+func _run() -> void:
+	await physics_frame  # a árvore ainda não aceita troca de cena no _initialize
+	G.new_game()
+	change_scene_to_file("res://main.tscn")
+	await _frames(5)
+	var s = current_scene
+	var p = s.player
+
+	# ---- C:\  movimento básico
+	var y0: float = p.global_position.y
+	_p("jump", true)
+	await _frames(15)
+	_check("pulo", y0 - p.global_position.y > 20)
+	_p("jump", false)
+	await _frames(40)
+	var x0: float = p.global_position.x
+	await _tap("dash")
+	await _frames(10)
+	_check("sem o chip não há dash", absf(p.global_position.x - x0) < 4.0)
+	_check("sai de C:\\ para Documentos", await _walk_to_room("right", "docs"))
+
+	# ---- Documentos: tiro e laser
+	await _teleport("docs", Vector2(12 * T + 8, 168))
+	s = current_scene
+	p = s.player
+	var bugs := get_nodes_in_group("enemy").size()
+	_p("right", true)
+	await _frames(2)
+	_p("right", false)
+	_p("shoot", true)
+	await _frames(150)
+	_p("shoot", false)
+	_check("tiro mata bug", get_nodes_in_group("enemy").size() < bugs)
+
+	await _teleport("docs", Vector2(42 * T + 8, 168))
+	p = current_scene.player
+	_p("right", true)
+	await _frames(60)
+	_p("right", false)
+	_check("laser bloqueia sem dash", p.global_position.x < 44 * T)
+
+	# ---- Downloads: chip de dash
+	await _teleport("downloads", Vector2(18 * T + 8, 168))
+	_p("right", true)
+	await _frames(40)
+	_p("right", false)
+	_check("pega o chip de dash", G.abilities.dash)
+
+	# ---- de volta ao laser, agora com dash
+	await _teleport("docs", Vector2(42 * T + 8, 168))
+	p = current_scene.player
+	_p("right", true)
+	await _frames(4)
+	await _tap("dash")
+	await _frames(20)
+	_check("dash atravessa o laser", p.global_position.x > 44 * T + 8 or G.room == "trash")
+	_check("chega à Lixeira", await _walk_to_room("right", "trash", 300))
+
+	# ---- Lixeira: ponto de restauração, faro, morte e volta
+	s = current_scene
+	p = s.player
+	_p("right", true)
+	await _frames(30)
+	_p("right", false)
+	_check("cria ponto de restauração", G.restore.get("room", "") == "trash")
+
+	_p("sniff", true)
+	await _frames(30)
+	_check("faro desacelera o tempo", s.sniffing and Engine.time_scale < 1.0)
+	_check("parede falsa sem colisão", not s.is_solid_at(s.fake_walls[0]))
+	_p("sniff", false)
+	await _frames(5)
+	_check("faro desliga", not s.sniffing and is_equal_approx(Engine.time_scale, 1.0))
+
+	p.hp = 1
+	p.take_damage(1, p.global_position + Vector2(10, 0))
+	await _frames(10)
+	_check("tela azul ao morrer", s.banner.visible and p.hp <= 0)
+	await _tap("restart")
+	await _frames(8)
+	s = current_scene
+	p = s.player
+	_check("volta ao ponto de restauração", G.room == "trash" and p.hp == p.MAX_HP and p.global_position.distance_to(s.restore_pos) < 4.0)
+
+	# ---- porta → sala de cima → de volta à Lixeira
+	p.global_position = s.door_pos
+	await _frames(8)
+	s = current_scene
+	_check("porta abre a sala de cima", _is_arena(s))
+	if _is_arena(s):
+		var t0: float = s.time_left
+		_p("right", true)
+		_p("shoot", true)
+		await _frames(150)
+		_p("right", false)
+		_p("shoot", false)
+		_check("ondas de bugs surgem", s._wave >= 1)
+		_check("cronômetro anda", s.time_left < t0)
+		s.time_left = 0.05
+		await _frames(170)
+		_check("vitória devolve à Lixeira", G.room == "trash" and G.taken.has("arena_desktop") and current_scene.get("player") != null)
+		s = current_scene
+		s.player.global_position = s.door_pos
+		await _frames(8)
+		_check("porta não reabre a sala vencida", not _is_arena(current_scene))
+
+	_check("Explorer conhece as 4 salas", G.visited.size() == 4)
+
+	for k in checks:
+		print("%-36s %s" % [k, "ok" if checks[k] else "FALHOU"])
+	var ok := checks.values().all(func(v): return v)
+	print("SMOKE ", "OK" if ok else "FALHOU")
+	quit(0 if ok else 1)
+
+
+func _is_arena(n: Node) -> bool:
+	# sem citar a classe Arena: ela usa o autoload Game, que ainda não existe
+	# quando este script é compilado
+	return n != null and n.name == "Arena"

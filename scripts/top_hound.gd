@@ -30,7 +30,7 @@ func _ready() -> void:
 	shape.shape = circle
 	add_child(shape)
 	add_to_group("player")
-	hp = clampi(Arena.carry_hp, 1, MAX_HP)
+	hp = clampi(Game.hp, 1, MAX_HP)
 
 
 func _input(event: InputEvent) -> void:
@@ -92,7 +92,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	stage.add_shake(4.0)
 	stage.hitstop(0.06)
 	if hp <= 0:
-		stage.show_banner("TELA AZUL\n\nO processo hound.exe parou de responder.\nPressione R para reiniciar.", Color(0.45, 0.6, 1.0))
+		stage.show_banner("TELA AZUL\n\nO processo hound.exe parou de responder.\nR volta ao ponto de restauração.", Color(0.45, 0.6, 1.0))
 		set_physics_process(false)
 		visible = false
 

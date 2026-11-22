@@ -9,7 +9,7 @@ machine, folder by folder, until it reaches the kernel. Working title.
 
 ![Concept art: the hound shoots a bug on platforms made of windows](docs/img/moodboard-hero.png)
 
-> **Status:** phase 0 (prototype) · grey-box art · target platform: Steam
+> **Status:** phase 1 (vertical slice) in progress · grey-box art · target platform: Steam
 
 ## The game in short
 
@@ -28,18 +28,23 @@ Feel references: *Gato Roboto*, *Not a Hero*, *Serious Sam: Bogus Detour* and
 
 ## Prototype screenshots
 
-Grey-box build from phase 0, captured from the game itself.
+Grey-box build, captured from the game itself.
 
-| Shooting | Bugs and turret |
+| Shooting bugs in Documentos | The laser only a dash gets through |
 |---|---|
-| ![The hound shooting along the corridor](docs/img/gameplay-shoot.png) | ![Walking bugs and a turret on a platform](docs/img/gameplay-jump.png) |
-| **Sniffing** | **Top-down room** |
-| ![Sniffing: time slows, the fake wall and the trail show up in teal, the turret's weak point blinks](docs/img/gameplay-sniff.png) | ![The top-down arena: bug waves close in while the timer runs](docs/img/gameplay-arena.png) |
+| ![The hound shooting at walking bugs](docs/img/gameplay-shoot.png) | ![Climbing platforms, a turret and the red laser barrier](docs/img/gameplay-laser.png) |
+| **The dash chip in Downloads** | **Sniffing in Lixeira** |
+| ![The dash chip waiting at the end of the Downloads branch](docs/img/gameplay-chip.png) | ![Sniffing: the fake wall and the trail show up in teal](docs/img/gameplay-sniff.png) |
+| **Explorer (Tab)** | **Top-down room** |
+| ![The Explorer map with the four visited rooms](docs/img/gameplay-explorer.png) | ![The top-down arena: bug waves close in while the timer runs](docs/img/gameplay-arena.png) |
 
-While **sniffing**, time slows to half speed, the fake wall that hides the
-exit shows up, a trail points to it, and the bugs' weak point blinks: shots
-deal double damage. The door behind the wall opens the **top-down room**:
-survive 45 seconds of bug waves.
+The Desktop region has four connected rooms. The hound starts **without the
+dash**; a laser in Documentos blocks the way to Lixeira, and the dash chip
+waits at the end of the Downloads branch. **Sniffing** slows time, reveals the
+fake wall that hides Lixeira's exit and makes shots deal double damage. A
+**restore point** saves progress; dying sends you back to it. The door behind
+the fake wall opens the **top-down room**: survive 45 seconds and you return to
+the region.
 
 ## Moodboard
 
@@ -89,7 +94,20 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] Automated smoke test
 - [x] Sniff: slow motion, energy meter, fake wall, trail, weak point (double damage)
 - [x] Door into a top-down arena: 45 seconds of waves, twin-stick aiming
-- [ ] Playtest with 5 people and tune the numbers
+- [ ] Playtest with 5 people and tune the numbers *(deferred to the end)*
+
+### Phase 1 checklist (vertical slice: Desktop region)
+
+- [x] Connected rooms built from ASCII maps, with exits at the screen edges
+- [x] Game state that survives room changes (health, abilities, items taken)
+- [x] First ability gate: dash chip in Downloads, laser barrier in Documentos
+- [x] Restore points; death returns you to the last one
+- [x] Explorer map (Tab) of visited rooms
+- [x] Top-down room returns to the region once cleared
+- [ ] Region boss: *o Arquivo Fantasma*
+- [ ] Final 1-bit sprites and tiles
+- [ ] Sound effects and music
+- [ ] Title screen, pause menu, save to disk
 
 ## Running the prototype
 
@@ -110,14 +128,15 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 | Shoot (hold) | J or X | X |
 | Dash | K or C | B |
 | Sniff (hold) | Shift or L | left trigger |
+| Explorer map | Tab | Back |
 | Aim in the top-down room | mouse | right stick |
-| Restart | R | Start |
+| Back to restore point | R | Start |
 
 ### Tests and tools
 
 ```bash
-# plays the corridor and the top-down room on its own (15 checks: movement,
-# shooting, sniff, fake wall, door, waves, timer and the win screen)
+# plays the whole region on its own (20 checks: movement, room exits, laser,
+# dash chip, restore point, sniff, death and respawn, top-down room and return)
 godot --headless --path . -s tests/smoke.gd
 
 # regenerates the gameplay screenshots in docs/img/ (needs a window)
@@ -128,11 +147,13 @@ godot --path . -s tools/capture.gd
 
 ```
 project.godot     settings (384×216, integer scaling, crisp pixels)
-main.tscn         side-view corridor
+main.tscn         side-view room (builds whichever room is current)
 arena.tscn        top-down room
 scripts/
-├── stage.gd      shared base: controls, screen shake, hitstop, HUD, restart
-├── main.gd       corridor from an ASCII map; fake wall, health patch, door
+├── game.gd       autoload "Game": current room, health, abilities, restore point
+├── rooms.gd      the Desktop region's rooms as ASCII maps, and how they link
+├── stage.gd      shared base: controls, screen shake, hitstop, HUD, toasts
+├── main.gd       room builder: exits, items, laser, restore point, door, Explorer
 ├── arena.gd      top-down room: bug waves and the 45-second timer
 ├── player.gd     the hound (side view): movement, dash, shooting, sniff
 ├── top_hound.gd  the hound (top-down): 8-way movement, twin-stick aim
@@ -146,6 +167,8 @@ tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images
 ```
 
-To change the corridor, edit `MAP` in `scripts/main.gd`:
-`#` wall · `F` fake wall · `P` hound · `w` walking bug · `t` turret ·
-`H` health patch · `D` door to the top-down room.
+To change the rooms, edit `scripts/rooms.gd`. Map legend:
+`#` wall · `F` fake wall · `L` laser · `P` start · `R` restore point ·
+`A` dash chip · `H` health patch · `D` door to the top-down room ·
+`w` walking bug · `t` turret. Each room's `links` say where every edge opening
+leads; the rows line up between rooms.

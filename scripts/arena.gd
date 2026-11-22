@@ -3,8 +3,6 @@ extends Stage
 ## Sala de cima: sobreviva 45 segundos às ondas de bugs, com tiro em dois analógicos.
 ## Legenda: # parede · P cão · s ponto de surgimento dos bugs
 
-static var carry_hp := 5  # vida trazida do corredor
-
 const DURATION := 45.0
 const MAX_BUGS := 14
 const MAP := [
@@ -95,7 +93,14 @@ func stage_process(delta: float) -> void:
 			b._burst()
 			b.queue_free()
 		add_shake(6.0)
-		show_banner("PROCESSO CONCLUÍDO\n\nfim do protótipo da fase 0\nR para jogar de novo", ACCENT)
+		show_banner("PROCESSO CONCLUÍDO", ACCENT)
+		Game.taken["arena_desktop"] = true
+		Game.hp = hound.hp
+		await get_tree().create_timer(2.0, true, false, true).timeout
+		if Game.arena_return.is_empty():
+			Game.enter(Game.START_ROOM)
+		else:
+			Game.enter(Game.arena_return.room, Game.arena_return.pos)
 
 
 func _spawn_wave() -> void:

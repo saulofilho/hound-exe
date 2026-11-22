@@ -9,6 +9,8 @@ const ACCENT := Color(0.18, 0.71, 0.66)  # teal da área de trabalho (cor do far
 var camera: Camera2D
 var hud: Label
 var banner: Label
+var toast: Label
+var _toast_t := 0.0
 var sniffing := false
 var _shake := 0.0
 
@@ -76,6 +78,13 @@ func hitstop(duration: float) -> void:
 	Engine.time_scale = base_time_scale()
 
 
+## Mensagem curta no rodapé (sala nova, item pego, ponto de restauração).
+func show_toast(text: String, seconds := 2.0) -> void:
+	toast.text = text
+	_toast_t = seconds
+	toast.visible = true
+
+
 func show_banner(text: String, color: Color) -> void:
 	banner.text = text
 	banner.add_theme_color_override("font_color", color)
@@ -84,10 +93,13 @@ func show_banner(text: String, color: Color) -> void:
 
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("restart"):
-		Engine.time_scale = 1.0
-		get_tree().change_scene_to_file("res://main.tscn")
+		Game.respawn()  # volta ao último ponto de restauração
+		set_process(false)
 		return
 	stage_process(delta)
+	var real := delta / maxf(Engine.time_scale, 0.05)
+	_toast_t = maxf(_toast_t - real, 0.0)
+	toast.visible = _toast_t > 0.0
 	# o tremor ignora a câmera lenta, para não ficar "mole" durante o faro
 	_shake = move_toward(_shake, 0.0, delta / maxf(Engine.time_scale, 0.05) * 30.0)
 	camera.offset = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
@@ -105,6 +117,14 @@ func _build_hud(help: String) -> void:
 	banner.size = Vector2(384, 216)
 	banner.visible = false
 	layer.add_child(banner)
+	toast = Label.new()
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.position = Vector2(0, 150)
+	toast.size = Vector2(384, 40)
+	toast.add_theme_font_size_override("font_size", 10)
+	toast.add_theme_color_override("font_color", ACCENT)
+	toast.visible = false
+	layer.add_child(toast)
 	var hint := Label.new()
 	hint.text = help
 	hint.position = Vector2(6, 200)
@@ -120,9 +140,9 @@ func _setup_input() -> void:
 		"left": [KEY_A, KEY_LEFT], "right": [KEY_D, KEY_RIGHT],
 		"up": [KEY_W, KEY_UP], "down": [KEY_S, KEY_DOWN],
 		"jump": [KEY_SPACE, KEY_Z], "shoot": [KEY_J, KEY_X],
-		"dash": [KEY_K, KEY_C], "sniff": [KEY_SHIFT, KEY_L], "restart": [KEY_R],
+		"dash": [KEY_K, KEY_C], "sniff": [KEY_SHIFT, KEY_L], "restart": [KEY_R], "map": [KEY_TAB],
 	}
-	var pad_buttons := {"jump": JOY_BUTTON_A, "shoot": JOY_BUTTON_X, "dash": JOY_BUTTON_B, "restart": JOY_BUTTON_START}
+	var pad_buttons := {"jump": JOY_BUTTON_A, "shoot": JOY_BUTTON_X, "dash": JOY_BUTTON_B, "restart": JOY_BUTTON_START, "map": JOY_BUTTON_BACK}
 	var pad_axes := {
 		"left": [JOY_AXIS_LEFT_X, -1.0], "right": [JOY_AXIS_LEFT_X, 1.0],
 		"up": [JOY_AXIS_LEFT_Y, -1.0], "down": [JOY_AXIS_LEFT_Y, 1.0],
