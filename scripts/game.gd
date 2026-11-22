@@ -14,13 +14,13 @@ var save_path := ""             # vazio = disco desligado (testes e ferramentas)
 var room := START_ROOM
 var entry := {}                 # {"pos": Vector2, "vel": Vector2} ao entrar numa sala
 var hp := MAX_HP
+var sniff := 100.0              # o faro atravessa as salas
 var abilities := {"dash": false}
 var restore := {}               # {"room": String, "pos": Vector2}
 var visited := {}
 var taken := {}                 # itens e eventos que não voltam ("room:x:y", "arena_desktop")
 var arena_return := {}          # para onde a sala de cima devolve o cão
 var _quitting := false
-var pending_ending := false     # acabou de sair da sala do chefe vencido
 var boss_return := {}           # para onde a saída do chefe devolve o cão
 
 
@@ -47,13 +47,13 @@ func new_game() -> void:
 	room = START_ROOM
 	entry = {}
 	hp = MAX_HP
+	sniff = 100.0
 	abilities = {"dash": false}
 	restore = {}
 	visited = {}
 	taken = {}
 	arena_return = {}
 	boss_return = {}
-	pending_ending = false
 
 
 func save_game() -> void:
@@ -88,7 +88,6 @@ func load_game() -> bool:
 
 
 func to_title() -> void:
-	pending_ending = false
 	_change.call_deferred("res://title.tscn")
 
 
@@ -121,6 +120,7 @@ func enter_arena(back_room: String, back_pos: Vector2) -> void:
 ## Volta ao último ponto de restauração com a vida cheia (ou ao início).
 func respawn() -> void:
 	hp = MAX_HP
+	sniff = 100.0
 	if restore.is_empty():
 		enter(START_ROOM)
 	else:

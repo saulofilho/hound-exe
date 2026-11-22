@@ -6,6 +6,7 @@ const BUG_COLOR := Art.ACCENT  # olhos, tiros e avisos: a cor da região
 const SPRITE := Vector2(16, 16)
 
 var hp := 3
+var contact_damage := 1
 var contact_radius := 13.0    # 0 = não machuca ao encostar
 var sound_kind := ""          # prefixo dos sons deste bug
 var _flash := 0.0

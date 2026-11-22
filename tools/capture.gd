@@ -72,7 +72,7 @@ func _run() -> void:
 
 	# Lixeira: farejando a parede falsa
 	G.abilities.dash = true
-	await _go("trash", Vector2(40 * T + 8, 168))
+	await _go("trash", Vector2(36 * T + 8, 168))  # fora do alcance que abre a parede: o rastro aparece
 	Input.action_press("sniff")
 	await _frames(25)
 	await _shot("gameplay-sniff.png")
@@ -81,14 +81,11 @@ func _run() -> void:
 	# Explorer
 	G.restore = {"room": "trash", "pos": Vector2(3 * T + 8, 168)}
 	await _frames(10)
-	Input.action_press("map")
-	await _frames(2)
-	Input.action_release("map")
+	current_scene._map_view.open()
 	await _frames(10)
 	await _shot("gameplay-explorer.png")
-	Input.action_press("map")
-	await _frames(2)
-	Input.action_release("map")
+	current_scene._map_view.close()
+	await _frames(4)
 
 	# sala de cima
 	G.enter_arena("trash", Vector2(44 * T, 168))
@@ -139,6 +136,7 @@ func _boss() -> void:
 	Input.action_release("sniff")
 	await _frames(4)
 
+	b.hp = 50  # primeira fase: atordoado, leva tiro sem faro
 	b.state = 5  # ATORDOADO
 	b._left = 2.0
 	b.position = Vector2(220, 162)
@@ -150,9 +148,7 @@ func _boss() -> void:
 	await _shot("boss-stunned.png")
 	Input.action_release("shoot")
 
-	Input.action_press("map")
-	await _frames(2)
-	Input.action_release("map")
+	current_scene._map_view.open()
 	await _frames(5)
 	await _shot("gameplay-explorer.png")
 

@@ -46,10 +46,12 @@ Captured from the game itself.
 
 The Desktop region has four connected rooms and a boss room. The hound starts **without the
 dash**; a laser in Documentos blocks the way to Lixeira, and the dash chip
-waits at the end of the Downloads branch. **Sniffing** slows time, reveals the
-fake wall that hides Lixeira's exit and makes shots deal double damage. A
+waits at the end of the Downloads branch. **Sniffing** slows time and makes shots deal double damage, and it is
+required: the fake wall that hides Lixeira's exit stays solid until it is
+sniffed up close. A
 **restore point** saves progress; dying sends you back to it. The door behind
-the fake wall opens the **top-down room**: survive 45 seconds and you return to
+the fake wall opens the **top-down room**: survive 45 seconds (sectors corrupt under your feet and
+pop-ups shoot, so keep moving) and you return to
 the region, where the same door now leads to the boss.
 
 ### Boss: o Arquivo Fantasma (the Ghost File)
@@ -63,8 +65,9 @@ the region, where the same door now leads to the boss.
 It floats and fires, then locks onto the hound's height, shows the line and
 charges: jump it or dash through it. Hitting the wall stuns it, and that is the
 window to shoot. Sniffing makes it solid at any time (double damage). At half
-health it speeds up, fires in a spread and projects copies that only sniffing
-clears. Dying sends you to the restore point and the boss recovers.
+health it speeds up, fires in a spread and projects copies: from then on only
+sniffing can hit the original. The charge takes 2 health, so standing still
+loses. Dying sends you to the restore point and the boss recovers.
 
 ## Moodboard
 
@@ -171,7 +174,7 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 | Explorer map | Tab | Back |
 | Aim in the top-down room | mouse | right stick |
 | Pause | Esc | Start |
-| Back to restore point | R (or the pause menu) | pause menu; Start on the blue screen |
+| Back to restore point | hold R (or the pause menu); a tap on the blue screen | pause menu; Start on the blue screen |
 
 ### Tests and tools
 
@@ -192,6 +195,13 @@ godot --headless --path . -s tests/audio.gd
 # save, title and pause across real processes, including a forced kill
 # (uses its own user://test_* files)
 godot --headless --fixed-fps 60 --path . -s tests/save.gd
+
+# attempts to break the game: past bugs, finishing without sniffing, winning
+# without moving (every free arena cell, 408 boss fights; takes a few minutes)
+godot --headless --fixed-fps 60 --path . -s tests/exploits.gd
+
+# one run from Lixeira to the ending, inputs only
+godot --headless --fixed-fps 60 --path . -s tests/finish.gd
 
 # the full 45 seconds of the top-down room, inputs only, 10 seeds
 godot --headless --fixed-fps 60 --path . -s tests/arena.gd
@@ -258,6 +268,7 @@ drawn from the same ASCII maps as the collisions.
 ```bash
 tools/build.sh          # Windows, Linux and macOS into builds/
 tools/make_trailer.sh   # gameplay trailer (macOS only)
+tools/make_promo.sh     # 30 s promo video, 16:9 and 9:16 (macOS only)
 ```
 
 Building needs the official Godot 4.7.2 export templates. Everything about
@@ -300,8 +311,8 @@ scripts/
 ├── enemy.gd      bug base: health, hit flash, knockback, shards
 ├── walker.gd     patrolling bug
 ├── turret.gd     shooting bug
-└── chaser.gd     swarming bug (top-down room)
-tests/            smoke, route, arena, boss, save, audio, art and Steam tests
+└── chaser.gd     swarming bug (and bad_sector.gd, the corrupted floor) (top-down room)
+tests/            smoke, route, finish, exploits, arena, boss, save, audio, art and Steam tests
 audio/            generated WAV files
 art/              generated sprite sheets and font
 tools/make_art.py sprites and font, drawn as text

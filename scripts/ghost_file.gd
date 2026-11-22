@@ -3,21 +3,24 @@ extends Enemy
 ## Arquivo Fantasma, chefe da Área de trabalho.
 ##
 ## Ciclo: FLUTUA (atira) → POSICIONA → AVISA (mostra a linha) → AVANÇA → ATORDOADO.
-## Só leva tiro atordoado ou enquanto o cão fareja (aí o dano é dobrado).
-## Com metade da vida, acelera, atira em leque e mostra cópias falsas nas outras
-## linhas; o faro apaga as cópias.
+## Primeira fase: leva tiro atordoado ou farejado (aí o dano é dobrado).
+## Segunda fase: acelera, atira em leque, cria cópias, e só o faro acerta.
+## A investida tira 2 de vida: quem não sai da linha não chega ao fim.
 
 signal defeated
 
 enum State { INTRO, DRIFT, POSITION, AIM, CHARGE, STUNNED }
 
-const MAX_HP_BOSS := 48
+# mais que duas janelas de dano inteiras (cerca de 46): quem não desvia morre
+# na terceira investida, antes de conseguir a terceira janela
+const MAX_HP_BOSS := 64
 const LANES := [168.0, 136.0, 104.0]  # chão, plataformas laterais, plataforma do meio
-const LEFT_X := 36.0
-const RIGHT_X := 348.0
+const LEFT_X := 30.0                  # cola na parede: não sobra canto seguro
+const RIGHT_X := 354.0
 const PERCH_Y := 70.0
 const FALL_Y := 162.0                 # atordoado, cai ao alcance do tiro reto
 const CONTACT := 17.0
+const CHARGE_DAMAGE := 2
 const SPRITE_SIZE := Vector2(32, 36)
 
 var state: State = State.INTRO
@@ -26,6 +29,7 @@ var side := 1                         # 1 = direita da sala, -1 = esquerda
 var _left := 1.6                      # tempo que falta no estado atual
 var _shot_t := 0.0
 var _player: Node2D
+var _hint_t := 0.0
 var _sheet: Texture2D
 
 
@@ -36,6 +40,7 @@ func _init() -> void:
 func _ready() -> void:
 	hp = MAX_HP_BOSS
 	contact_radius = 0.0
+	contact_damage = CHARGE_DAMAGE
 	collision_layer = 0
 	_sheet = Art.texture("ghost")
 	collision_mask = 0  # é um fantasma: atravessa plataformas
@@ -53,7 +58,11 @@ func second_phase() -> bool:
 
 
 func is_vulnerable() -> bool:
-	return state != State.INTRO and (state == State.STUNNED or get_parent().sniffing)
+	if state == State.INTRO:
+		return false
+	if get_parent().sniffing:
+		return true
+	return state == State.STUNNED and not second_phase()
 
 
 func _physics_process(delta: float) -> void:
@@ -90,9 +99,13 @@ func _physics_process(delta: float) -> void:
 		State.CHARGE:
 			var speed := 270.0 if second_phase() else 225.0
 			position.x = move_toward(position.x, _edge(-side), speed * delta)
+			# confere aqui também: o último passo antes da parede tem que pegar o canto
+			if global_position.distance_to(_player.global_position) < CONTACT:
+				_player.take_damage(CHARGE_DAMAGE, global_position)
 			if is_equal_approx(position.x, _edge(-side)):
 				_stun()
 		State.STUNNED:
+			_teach_sniff(delta)
 			position.y = move_toward(position.y, FALL_Y, 220.0 * delta)
 			if _left <= 0.0:
 				_drift()
@@ -127,6 +140,14 @@ func _stun() -> void:
 	_left = 1.8 if second_phase() else 2.2
 	get_parent().add_shake(6.0)
 	Sound.play("ghost_stun")
+
+
+## Segunda fase, atordoado, e o jogador atira sem farejar: diz por que não pega.
+func _teach_sniff(delta: float) -> void:
+	_hint_t = maxf(_hint_t - delta, 0.0)
+	if _hint_t == 0.0 and second_phase() and not get_parent().sniffing and Input.is_action_pressed("shoot"):
+		_hint_t = 4.0
+		get_parent().show_toast(Options.t("boss_need_sniff"), 2.5)
 
 
 func _fire() -> void:
@@ -166,6 +187,11 @@ func hit(amount: int, _dir: Vector2) -> void:
 
 func _draw() -> void:
 	var main := get_parent()
+	if state == State.STUNNED and second_phase() and not main.sniffing:
+		# caído entre as cópias: intangível até o faro separar o original
+		var inward := 1.0 if position.x < 192.0 else -1.0  # as cópias ficam dentro da sala
+		for dx in [30.0, 60.0]:
+			_draw_file(Vector2(dx * inward, 0), false)
 	if state == State.AIM or state == State.CHARGE:
 		var shown: Array = [lane]
 		if second_phase() and not main.sniffing:
@@ -194,7 +220,7 @@ func _draw_file(off: Vector2, solid: bool) -> void:
 	var look := 1  # escondido
 	if _flash > 0.0:
 		look = 4
-	elif state == State.STUNNED:
+	elif state == State.STUNNED and solid:
 		look = 3
 	elif state == State.CHARGE:
 		look = 2

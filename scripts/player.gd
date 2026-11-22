@@ -39,6 +39,7 @@ var _sheet: Texture2D
 
 func _ready() -> void:
 	_sheet = Art.texture("hound")
+	sniff_energy = Game.sniff
 	collision_layer = 2
 	collision_mask = 1
 	var shape := CollisionShape2D.new()
@@ -141,6 +142,7 @@ func _update_sniff(delta: float) -> void:
 			_play_scent()
 	else:
 		sniff_energy = minf(sniff_energy + SNIFF_REGEN * real, 100.0)
+	Game.sniff = sniff_energy
 
 
 ## O cheiro mais próximo soa com o seu timbre: mais rápido e agudo quanto mais perto.
@@ -153,7 +155,7 @@ func _play_scent() -> void:
 		if d < nearest:
 			nearest = d
 			kind = e.sound_kind
-	for secret in stage.fake_walls + stage.chips:
+	for secret in stage.hidden_walls() + stage.chips:
 		var d := global_position.distance_to(secret)
 		# segredo tem preferência sobre bug à mesma distância
 		if d * 0.7 < nearest:
@@ -186,7 +188,7 @@ func _check_contact_damage() -> void:
 				take_damage(1, l)
 	for e in get_tree().get_nodes_in_group("enemy"):
 		if global_position.distance_to(e.global_position) < e.contact_radius:
-			take_damage(1, e.global_position)
+			take_damage(e.contact_damage, e.global_position)
 
 
 func take_damage(amount: int, from: Vector2) -> void:
@@ -200,6 +202,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	main.hitstop(0.06)
 	Sound.play("death" if hp <= 0 else "hurt")
 	if hp <= 0:
+		main.set_sniffing(false)  # a física do cão para aqui: ninguém mais desligaria o faro
 		main.show_banner(Options.t("death_side"), Color("1c2fa8"))
 		set_physics_process(false)
 		visible = false

@@ -125,11 +125,22 @@ func _run() -> void:
 	_p("sniff", true)
 	await _frames(30)
 	_check("faro desacelera o tempo", s.sniffing and Engine.time_scale < 1.0)
-	_check("parede falsa sem colisão", not s.is_solid_at(s.fake_walls[0]))
+	_check("parede falsa sólida de longe", s.is_solid_at(s.fake_walls[0]))
 	_p("sniff", false)
 	await _frames(5)
 	_check("faro desliga", not s.sniffing and is_equal_approx(Engine.time_scale, 1.0))
 
+	var before: Vector2 = p.global_position
+	p.global_position = s.fake_walls[1] - Vector2(40, 0)
+	_p("sniff", true)
+	await _frames(10)
+	_p("sniff", false)
+	await _frames(5)
+	_check("farejada de perto, abre", not s.is_solid_at(s.fake_walls[0]))
+	p.global_position = before
+	await _frames(5)
+
+	p._iframes = 0.0  # a torreta ao lado da parede pode ter acertado o cão
 	p.hp = 1
 	p.take_damage(1, p.global_position + Vector2(10, 0))
 	await _frames(10)
@@ -194,7 +205,7 @@ func _boss_flow() -> void:
 	await _frames(3)
 	_p("shoot", false)
 	await _frames(30)
-	_check("tiro atravessa o fantasma", b.hp == 48)
+	_check("tiro atravessa o fantasma", b.hp == 64)
 	b.set_physics_process(true)
 	_p("sniff", true)
 	await _frames(3)
@@ -204,7 +215,7 @@ func _boss_flow() -> void:
 	await _frames(3)
 	_p("shoot", false)
 	await _frames(50)
-	_check("faro: acerta com dano dobrado", b.hp == 46)
+	_check("faro: acerta com dano dobrado", b.hp == 62)
 	_p("sniff", false)
 	await _frames(3)
 
@@ -220,7 +231,7 @@ func _boss_flow() -> void:
 	s.player.global_position = s.door_pos
 	await _frames(8)
 	s = current_scene
-	_check("revanche com o chefe inteiro", G.room == "ghost" and s.boss.hp == 48)
+	_check("revanche com o chefe inteiro", G.room == "ghost" and s.boss.hp == 64)
 	s.player.global_position = s.exit_pos
 	await _frames(5)
 	_check("saída fechada até vencer", G.room == "ghost")

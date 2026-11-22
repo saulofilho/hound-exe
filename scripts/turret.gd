@@ -5,6 +5,7 @@ extends Enemy
 const RANGE := 170.0
 const FIRE_EVERY := 1.6
 
+var reach := RANGE            # a da sala de cima alcança a sala toda
 var _cooldown := 1.0
 var _sheet: Texture2D
 
@@ -27,7 +28,7 @@ func _physics_process(delta: float) -> void:
 		return
 	_cooldown -= delta
 	var to := player.global_position - global_position
-	if _cooldown <= 0.0 and to.length() < RANGE:
+	if _cooldown <= 0.0 and to.length() < reach:
 		_cooldown = FIRE_EVERY
 		var b := Bullet.new()
 		b.setup(to.normalized(), false)

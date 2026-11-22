@@ -154,6 +154,7 @@ func _events() -> void:
 	await _hold("dash", 3)
 	_heard("dash")
 	var s = current_scene
+	s.player.hp = 3
 	s.player.global_position = s.patches[0]
 	await _frames(4)
 	_heard("pickup")
@@ -259,7 +260,7 @@ func _events() -> void:
 	b.position.x = b._edge(-b.side)
 	await _frames(3)
 	_heard("ghost_stun")
-	b.hit(25, Vector2.RIGHT)
+	b.hit(33, Vector2.RIGHT)
 	await _frames(4)
 	_heard("ghost_hit")
 	_heard("ghost_phase")

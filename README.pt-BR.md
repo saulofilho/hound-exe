@@ -34,7 +34,11 @@ Ao continuar, o cão volta ao último ponto de restauração.
 A música e os efeitos são originais (`tools/make_audio.py`); volume, idioma
 (português ou inglês), tela cheia e tremor ficam em OPÇÕES, no título e na pausa.
 
-**Fase 2 (Steam):** `tools/build.sh` exporta Windows, Linux e macOS. O que está
+O faro é obrigatório: a parede falsa só abre farejada e, na segunda fase do
+chefe, só ele acerta o original. Na sala de cima, quem fica parado perde.
+
+**Fase 2 (Steam):** `tools/build.sh` exporta Windows, Linux e macOS e
+`tools/make_promo.sh` gera o vídeo de divulgação em inglês. O que está
 pronto e o que falta para publicar está em [steam/PUBLICAR.md](steam/PUBLICAR.md).
 
 Depois de clonar, importe uma vez antes de rodar:
@@ -54,7 +58,7 @@ Depois de clonar, importe uma vez antes de rodar:
 | Atirar (segurar) | J ou X | X |
 | Dash | K ou C | B |
 | Pausar | Esc | Start |
-| Voltar ao ponto de restauração | R | menu de pausa |
+| Voltar ao ponto de restauração | segurar R (um toque na tela azul) | menu de pausa |
 
 ### Estrutura
 

@@ -130,7 +130,7 @@ func _run() -> void:
 	# chefe
 	await _room("ghost")
 	var boss = current_scene.boss
-	boss.hp = 34
+	boss.hp = 42
 	boss._left = 0.5
 	var p = current_scene.player
 	var dash_for := 0
@@ -147,6 +147,7 @@ func _run() -> void:
 		if boss.state == STUNNED and p.facing != signi(int(d)):
 			_hold(toward)
 		_hold("shoot", boss.state == STUNNED)
+		_hold("sniff", boss.state == STUNNED and boss.second_phase())
 		dash_for -= 1
 		if close and dash_for < -20:
 			dash_for = 4

@@ -208,6 +208,14 @@ morrem por culpa do jogo ou delas.
 | Arte 1-bit parecer pobre na vitrine | médio | cor de destaque por região e animação caprichada |
 | Comparação direta com as referências | médio | identidade própria: o cão, a coleira e o computador como mundo |
 
+## 13.1 Regras que os testes protegem
+
+- **O faro é necessário:** abre a parede falsa e é o único jeito de acertar o
+  chefe na segunda fase.
+- **Parado não se vence:** nem na sala de cima, nem no chefe.
+
+`tests/exploits.gd` falha se uma delas cair. Toda região nova precisa das duas.
+
 ## 14. Perguntas em aberto
 
 1. O tempo disponível e quem faz arte e música.

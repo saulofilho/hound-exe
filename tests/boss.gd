@@ -2,8 +2,8 @@ extends SceneTree
 ## Luta com o Arquivo Fantasma só com os controles, sem mexer na vida de ninguém.
 ## Rodar: godot --headless --fixed-fps 60 --path . -s tests/boss.gd
 ##
-## Estratégias: parado (tem que perder), atirar sem desviar (só informativo),
-## desviar e atirar (tem que dar para vencer), e o mesmo usando o faro.
+## Estratégias: parado e atirar sem desviar (têm que perder); desviar no dash,
+## pular e farejar mais (têm que vencer). Na segunda fase todos farejam.
 
 const DRIFT := 1
 const CHARGE := 4
@@ -70,6 +70,8 @@ func _fight(style: String, delay: int) -> Dictionary:
 						if v.length() < 26.0 and v.dot(c.dir) < 0.0:
 							dodge = true
 			if b.state == STUNNED:
+				if b.second_phase():
+					want["sniff"] = true
 				if absf(d) > 100.0 or p.facing != signi(int(d)):
 					want[toward] = true
 				want["shoot"] = absf(d) < 220.0
@@ -126,8 +128,8 @@ func _run() -> void:
 		for delay in [0, 7, 19, 31, 47, 73]:
 			var r: Dictionary = await _fight(style, delay)
 			print("%-9s inicio+%-3d %s em %5.1fs  dano=%d chefe=%d" % [style, delay, "VENCEU" if r.won else "perdeu", r.seconds, r.hurt, r.boss])
-			if style == "parado":
-				_expect("  parado nao vence", not r.won)
+			if style in ["parado", "so_atira"]:
+				_expect("  sem desviar nao vence", not r.won)
 			elif style in ["desvia", "pula", "faro"]:
 				_expect("  luta vencivel", r.won)
 	print("BOSS ", "OK" if failures == 0 else "FALHOU (%d)" % failures)

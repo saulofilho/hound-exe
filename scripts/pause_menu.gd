@@ -56,6 +56,8 @@ func _input(event: InputEvent) -> void:
 				_show_main()  # B no submenu volta um nível
 			else:
 				close()
+	elif stage.overlay_open():
+		return
 	elif event.is_action_pressed("pause"):
 		get_viewport().set_input_as_handled()
 		if stage.hero_dead():

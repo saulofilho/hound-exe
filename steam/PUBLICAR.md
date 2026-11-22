@@ -8,7 +8,7 @@ confira os links no fim antes de cada envio.
 | Objetivo | Situação |
 |---|---|
 | Página "Em breve" | **Material pronto.** Dependem de você: conta, taxa, nome, contato de suporte e respostas do questionário |
-| Demo (Windows e Linux) | **Builds prontos, nunca abertos nesses sistemas.** Teste em máquina real antes de enviar |
+| Demo (Windows e Linux) | **Builds prontos, ainda não envie:** o caminho crítico dura cerca de 2 minutos (meta: 15 a 20), falta teste com pessoas e os builds nunca foram abertos nesses sistemas |
 | Demo (macOS) | **Bloqueada:** falta notarizar (conta Apple Developer, paga à parte) |
 | Jogo completo, pago | **Não está pronto.** Existe 1 das 5 regiões do GDD, poucos minutos de jogo. A análise compara o build com a página e recusa jogo incompleto vendido como completo |
 
@@ -122,6 +122,7 @@ exige o SDK da Steam.
 | Cápsulas, Library, fundo e ícones | `steam/assets/` (`tools/make_store_art.py`) |
 | 8 capturas 1920x1080, em inglês | `steam/screenshots/` (`godot --path . -s tools/capture.gd -- store`) |
 | Trailer de gameplay, 34 s | `builds/trailer/` (`tools/make_trailer.sh`) |
+| Vídeo de divulgação, 30 s, 16:9 e 9:16 | `builds/promo/` (`tools/make_promo.sh`). Para redes; na Steam, só como trailer secundário |
 | Textos em inglês e português | [LOJA.md](LOJA.md) |
 
 Marque as capturas e o trailer como gameplay e para todas as idades.

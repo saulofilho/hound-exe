@@ -4,6 +4,7 @@ extends Node2D
 ## controles, câmera com tremor, hitstop, HUD, avisos e reinício.
 
 const TILE := 16
+const RESTART_HOLD := 0.8      # segundos segurando R
 const ACCENT := Art.ACCENT
 
 var camera: Camera2D
@@ -14,6 +15,7 @@ var _toast_t := 0.0
 var sniffing := false
 var _shake := 0.0
 var pause_menu: PauseMenu
+var _restart_held := 0.0
 
 
 func _ready() -> void:
@@ -51,12 +53,17 @@ func hero_dead() -> bool:
 	return false
 
 
+## Alguma janela por cima do jogo que cuida do próprio Esc (o Explorer).
+func overlay_open() -> bool:
+	return false
+
+
 func refresh_text() -> void:
 	hud.hint = help_text()
 
 
 func _on_interrupted() -> void:
-	if not pause_menu.visible and not hero_dead():
+	if not pause_menu.visible and not hero_dead() and not overlay_open():
 		pause_menu.open()
 
 
@@ -119,7 +126,7 @@ func show_banner(text: String, color: Color) -> void:
 
 
 func _process(delta: float) -> void:
-	if Input.is_action_just_pressed("restart"):
+	if _wants_restart(delta):
 		Game.respawn()  # volta ao último ponto de restauração
 		set_process(false)
 		return
@@ -132,6 +139,21 @@ func _process(delta: float) -> void:
 	_shake = move_toward(_shake, 0.0, delta / maxf(Engine.time_scale, 0.05) * 30.0)
 	var jolt := Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
 	camera.offset = jolt if Options.shake else Vector2.ZERO
+
+
+## Na tela azul basta um toque; vivo, é preciso segurar.
+func _wants_restart(delta: float) -> bool:
+	var pressed := Input.is_action_just_pressed("restart")
+	if hero_dead():
+		return pressed
+	if pressed:
+		show_toast(Options.t("hold_restart"), RESTART_HOLD + 0.6)
+	if Input.is_action_pressed("restart"):
+		_restart_held += delta / maxf(Engine.time_scale, 0.05)
+	else:
+		_restart_held = 0.0
+	hud.restart_hold = _restart_held / RESTART_HOLD
+	return _restart_held >= RESTART_HOLD
 
 
 func _build_hud(help: String) -> void:

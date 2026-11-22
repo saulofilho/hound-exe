@@ -45,7 +45,31 @@ const DATA := {
 		"ARQUIVO FANTASMA\nFareje para torná-lo sólido, ou espere ele bater.",
 		"GHOST FILE\nSniff to make it solid, or wait for it to crash.",
 	],
-	"boss_copies": ["O arquivo criou cópias. Fareje o original.", "The file made copies. Sniff out the original."],
+	"boss_copies": [
+		"O arquivo criou cópias.\nAgora só o faro acerta o original.",
+		"The file made copies.\nOnly sniffing can hit the original now.",
+	],
+	"boss_need_sniff": [
+		"O tiro atravessa. Segure Shift e atire no original.",
+		"Shots pass through. Hold Shift and shoot the original.",
+	],
+	"boss_need_sniff_pad": [
+		"O tiro atravessa. Segure LT e atire no original.",
+		"Shots pass through. Hold LT and shoot the original.",
+	],
+	"wall_smells": [
+		"Esta parede cheira estranho.\nSegure Shift para farejar.",
+		"This wall smells odd.\nHold Shift to sniff.",
+	],
+	"wall_smells_pad": [
+		"Esta parede cheira estranho.\nSegure LT para farejar.",
+		"This wall smells odd.\nHold LT to sniff.",
+	],
+	"wall_found": ["PASSAGEM REVELADA", "PASSAGE REVEALED"],
+	"health_full": ["Vida cheia: o patch fica para depois.", "Full health: the patch stays for later."],
+	"hold_restart": ["Segure R para reiniciar do ponto de restauração", "Hold R to restart from the restore point"],
+	"hold_restart_pad": ["Use Menu para reiniciar do ponto de restauração", "Use Menu to restart from the restore point"],
+	"arena_zones": ["Setores marcados vão corromper. Saia de cima!", "Marked sectors will corrupt. Step off them!"],
 	"boss_down": ["ARQUIVO FANTASMA EXCLUÍDO\nregião limpa, saída aberta", "GHOST FILE DELETED\nregion clean, exit open"],
 	"got_health": ["+1 VIDA", "+1 HP"],
 	"got_dash": ["DASH INSTALADO · K ou C\natravessa lasers e tiros", "DASH INSTALLED · K or C\ngoes through lasers and shots"],

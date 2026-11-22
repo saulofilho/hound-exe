@@ -11,6 +11,7 @@ var seconds_left := -1    # cronômetro da sala de cima
 var bugs := 0
 var place := ""           # nome da sala, no canto do relógio
 var boss_life := -1.0     # 0 a 1; < 0 esconde
+var restart_hold := 0.0   # 0 a 1 enquanto segura R
 var hint := ""            # controles, só onde ensinar faz falta
 
 
@@ -63,6 +64,12 @@ func _draw() -> void:
 		var width := Art.text_width(place) + 8
 		Art.border(self, Rect2(Art.SCREEN.x - width - 2, top + 3, width, 13), Art.MID)
 		Art.text(self, Vector2(Art.SCREEN.x - width + 2, y), place)
+
+	if restart_hold > 0.0:
+		var track := Rect2(132, top - 9, 120, 7)
+		draw_rect(track, Art.BLACK)
+		Art.border(self, track)
+		draw_rect(Rect2(track.position + Vector2(2, 2), Vector2(116.0 * minf(restart_hold, 1.0), 3)), Art.ACCENT)
 
 	if boss_life >= 0.0:
 		var box := Rect2(92, 4, 200, 15)

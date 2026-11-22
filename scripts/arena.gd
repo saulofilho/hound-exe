@@ -1,10 +1,14 @@
 class_name Arena
 extends Stage
 ## Sala de cima: sobreviva 45 segundos às ondas de bugs, com tiro em dois analógicos.
+## Parado não se sobrevive: setores corrompem debaixo do cão e pop-ups atiram.
 ## Legenda: # parede · P cão · s ponto de surgimento dos bugs
 
 const DURATION := 45.0
 const MAX_BUGS := 14
+const FIRST_SECTOR := 2.5
+const SECTOR_EVERY := 2.8      # um setor novo onde o cão está
+const TURRET_WAVES := [3, 7]   # ondas que trazem um pop-up
 const MAP := [
 	"########################",
 	"#s.........s..........s#",
@@ -27,6 +31,8 @@ var time_left := DURATION
 var _wave := 0
 var _wave_t := 1.2
 var _over := false
+var _sector_t := FIRST_SECTOR
+var _sector_told := false
 
 
 func _ready() -> void:
@@ -91,6 +97,10 @@ func stage_process(delta: float) -> void:
 	if _wave_t <= 0.0:
 		_spawn_wave()
 
+	_sector_t -= delta
+	if _sector_t <= 0.0:
+		_corrupt_sector()
+
 	var bugs := get_tree().get_nodes_in_group("enemy")
 	hud.hp = maxi(hound.hp, 0)
 	hud.seconds_left = ceili(time_left)
@@ -101,12 +111,15 @@ func stage_process(delta: float) -> void:
 		for b in bugs:
 			b._burst()
 			b.queue_free()
+		for c in get_children():
+			if c is BadSector or (c is Bullet and not c.friendly):
+				c.queue_free()
 		add_shake(6.0)
 		show_banner(Options.t("arena_won"), ACCENT)
 		Sound.music("")
 		Sound.play("victory")
 		Game.taken["arena_desktop"] = true
-		Game.hp = hound.hp
+		Game.hp = Game.MAX_HP  # a porta seguinte é o chefe
 		Game.save_game()
 		# process_always = false: a volta à região espera se o jogo estiver pausado
 		await get_tree().create_timer(2.0, false, false, true).timeout
@@ -127,3 +140,29 @@ func _spawn_wave() -> void:
 		c.position = spawns[randi() % spawns.size()] + Vector2(randf_range(-4, 4), randf_range(-4, 4))
 		c.speed += _wave * 2.0
 		add_child(c)
+	if _wave in TURRET_WAVES:
+		_spawn_turret()
+
+
+## Marca o chão debaixo do cão.
+func _corrupt_sector() -> void:
+	_sector_t = SECTOR_EVERY
+	var sector := BadSector.new()
+	sector.hound = hound
+	sector.position = hound.global_position
+	add_child(sector)
+	if not _sector_told:
+		_sector_told = true
+		show_toast(Options.t("arena_zones"), 2.5)
+
+
+## Um pop-up no ponto mais longe do cão.
+func _spawn_turret() -> void:
+	var far: Vector2 = spawns[0]
+	for at in spawns:
+		if at.distance_to(hound.global_position) > far.distance_to(hound.global_position):
+			far = at
+	var turret := Turret.new()
+	turret.reach = 600.0
+	turret.position = far
+	add_child(turret)

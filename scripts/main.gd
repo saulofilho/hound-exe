@@ -11,6 +11,8 @@ const PATCH := 3
 const DOOR := 4
 const DOOR_CLEAR := 5
 const DOOR_LOCKED := 6
+const REVEAL_RANGE := 96.0     # farejar a esta distância abre a parede falsa
+const NUDGE_RANGE := 26.0      # encostado nela sem farejar: o jogo dá a dica
 
 var MAP: Array = []
 var data: Dictionary
@@ -23,7 +25,11 @@ var fake_walls: Array[Vector2] = []
 var lasers: Array[Vector2] = []
 var _leaving := false
 var _door_told := false
-var _map_view: Control
+var _map_view: ExplorerView
+var revealed := false          # a parede falsa desta sala já foi farejada
+var _fake_bodies: Array[StaticBody2D] = []
+var _nudged := false
+var _patch_told := false
 var boss: GhostFile
 var exit_pos := Vector2.ZERO   # saída da sala do chefe, trancada até ele cair
 var _room_art: RoomArt
@@ -47,6 +53,7 @@ func _key(pos: Vector2) -> String:
 func _build_level() -> void:
 	data = Rooms.DATA[Game.room]
 	MAP = data.map
+	revealed = Game.taken.has(_secret_key())
 	_items = Art.texture("items")
 	_laser_sheet = Art.texture("laser")
 	_room_art = RoomArt.new()
@@ -72,7 +79,7 @@ func _build_level() -> void:
 				"P": start = at
 				"w": _spawn(Walker.new(), at)
 				"t": _spawn(Turret.new(), at)
-				"F": fake_walls.append(at)
+				"F": _add_fake_wall(at)
 				"R": restore_pos = at
 				"D": door_pos = at
 				"B": boss_at = at
@@ -91,6 +98,7 @@ func _build_level() -> void:
 	if Game.entry.has("pos"):
 		player.position = Game.entry.pos
 		player.velocity = Game.entry.vel
+		player.facing = _facing_inward(Game.entry.pos.x, Game.entry.vel.x)
 	else:
 		player.position = start if start != Vector2.ZERO else restore_pos
 	add_child(player)
@@ -110,7 +118,9 @@ func _build_level() -> void:
 	camera.reset_smoothing()
 
 	_map_view = ExplorerView.new()
+	_map_view.stage = self
 	_map_view.visible = false
+	_room_art.reveal = revealed
 
 
 func _ready() -> void:
@@ -126,10 +136,10 @@ func _ready() -> void:
 	else:
 		show_toast(Options.t("room_" + Game.room))
 	Sound.music("boss" if boss != null else "desktop")
-	if Game.pending_ending:
-		Game.pending_ending = false
-		if Options.show_ending:
-			pause_menu.open_ending()
+	if Options.show_ending and Game.room != "ghost" and Game.taken.has("boss_desktop") and not Game.taken.has("ending_seen"):
+		# depende do que está salvo, não de por onde o cão saiu do chefe
+		Game.taken["ending_seen"] = true
+		pause_menu.open_ending()
 	Game.save_game()  # depois dos avisos, para uma falha de gravação aparecer
 
 
@@ -140,6 +150,68 @@ func refresh_text() -> void:
 
 func hero_dead() -> bool:
 	return is_instance_valid(player) and player.hp <= 0
+
+
+func _secret_key() -> String:
+	return Game.room + ":secret"
+
+
+func hidden_walls() -> Array[Vector2]:
+	var none: Array[Vector2] = []
+	return none if revealed else fake_walls
+
+
+## Sólida até ser farejada de perto; depois fica aberta para sempre.
+func _add_fake_wall(at: Vector2) -> void:
+	fake_walls.append(at)
+	if revealed:
+		return
+	var body := StaticBody2D.new()
+	body.collision_layer = 1
+	body.collision_mask = 0
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(TILE, TILE)
+	shape.shape = rect
+	body.position = at
+	body.add_child(shape)
+	add_child(body)
+	_fake_bodies.append(body)
+
+
+func _update_secret(pp: Vector2) -> void:
+	if revealed or fake_walls.is_empty():
+		return
+	var nearest := INF
+	for c in fake_walls:
+		nearest = minf(nearest, pp.distance_to(c))
+	if sniffing and nearest < REVEAL_RANGE:
+		revealed = true
+		for body in _fake_bodies:
+			body.queue_free()
+		_fake_bodies.clear()
+		Game.taken[_secret_key()] = true
+		Sound.play("restore", 1.3)
+		show_toast(Options.t("wall_found"))
+		Game.save_game()
+	elif nearest < NUDGE_RANGE and not _nudged:
+		_nudged = true  # sem isto, quem nunca farejou ficaria preso
+		show_toast(Options.t("wall_smells"), 3.5)
+	elif nearest > NUDGE_RANGE * 3.0:
+		_nudged = false
+
+
+## Quem entra por uma borda olha para dentro da sala.
+func _facing_inward(x: float, speed: float) -> int:
+	if x < 24.0:
+		return 1
+	if x > MAP[0].length() * TILE - 24.0:
+		return -1
+	return -1 if speed < 0.0 else 1
+
+
+func overlay_open() -> bool:
+	return _map_view != null and _map_view.visible
 
 
 func _spawn(e: Node2D, at: Vector2) -> void:
@@ -168,7 +240,7 @@ func is_solid(cell: Vector2i) -> bool:
 	var row: String = MAP[cell.y]
 	if cell.x < 0 or cell.x >= row.length():
 		return false  # aberturas de saída
-	return row[cell.x] == "#"
+	return row[cell.x] == "#" or (row[cell.x] == "F" and not revealed)
 
 
 func is_solid_at(pos: Vector2) -> bool:
@@ -181,7 +253,7 @@ func _draw() -> void:
 	var t := Time.get_ticks_msec()
 	var corner := SPRITE / 2.0
 
-	if sniffing:
+	if sniffing or revealed:
 		for c in fake_walls:
 			_dashed_rect(Rect2(c - corner, SPRITE).grow(-1), ACCENT)
 
@@ -202,7 +274,7 @@ func _draw() -> void:
 		Art.frame(self, _items, DOOR if cleared else DOOR_LOCKED, exit_pos - corner, SPRITE)
 
 	if sniffing and is_instance_valid(player):
-		var targets := fake_walls + chips
+		var targets := hidden_walls() + chips
 		if not targets.is_empty():
 			var target: Vector2 = targets[targets.size() - 1]
 			var from := player.global_position
@@ -231,11 +303,13 @@ func stage_process(_delta: float) -> void:
 	camera.global_position = pp + Vector2(player.facing * 32, -16)
 	queue_redraw()
 
-	if Input.is_action_just_pressed("map"):
-		_map_view.visible = not _map_view.visible
-
 	for p in patches.duplicate():
 		if pp.distance_to(p) < 10.0:
+			if player.hp >= player.MAX_HP:
+				if not _patch_told:
+					_patch_told = true
+					show_toast(Options.t("health_full"))
+				continue
 			patches.erase(p)
 			Game.taken[_key(p)] = true
 			player.heal(1)
@@ -285,7 +359,8 @@ func stage_process(_delta: float) -> void:
 	elif door_pos != Vector2.ZERO and pp.distance_to(door_pos) > 40.0:
 		_door_told = false
 
-	_room_art.reveal = sniffing
+	_update_secret(pp)
+	_room_art.reveal = sniffing or revealed
 	if is_instance_valid(boss):
 		hud.boss_life = float(boss.hp) / GhostFile.MAX_HP_BOSS
 	else:
@@ -293,7 +368,6 @@ func stage_process(_delta: float) -> void:
 
 	if exit_pos != Vector2.ZERO and Game.taken.has("boss_desktop") and player.hp > 0 and pp.distance_to(exit_pos) < 10.0:
 		_leaving = true
-		Game.pending_ending = true
 		Sound.play("door")
 		Game.hp = player.hp
 		set_sniffing(false)
@@ -361,14 +435,43 @@ func _check_exit(pp: Vector2) -> void:
 ## Mapa das salas visitadas (Tab). Cada sala é um retângulo na grade da região.
 class ExplorerView extends Control:
 	const CELL := Vector2(36, 22)
+	var stage: Stage
+	var _closing := false
 
 	func _ready() -> void:
+		process_mode = Node.PROCESS_MODE_ALWAYS
 		size = Vector2(384, 216)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	func _process(_d: float) -> void:
 		if visible:
 			queue_redraw()
+
+	func _input(event: InputEvent) -> void:
+		if visible:
+			if event.is_action_pressed("map") or event.is_action_pressed("pause") or event.is_action_pressed("ui_cancel"):
+				get_viewport().set_input_as_handled()
+				close()
+		elif event.is_action_pressed("map") and not get_tree().paused and not stage.hero_dead():
+			get_viewport().set_input_as_handled()
+			open()
+
+	func open() -> void:
+		visible = true
+		_closing = false
+		get_tree().paused = true
+		queue_redraw()
+
+	func close() -> void:
+		if _closing:
+			return
+		_closing = true
+		# como na pausa: senão o B que fecha vira dash
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		visible = false
+		_closing = false
+		get_tree().paused = false
 
 	func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.85))

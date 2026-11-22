@@ -53,5 +53,6 @@ Singleplayer, Indie
 
 > No account, login or internet needed. Keyboard, mouse or gamepad. To reach the
 > boss: get the dash chip in C:\Downloads (upper-right exit of C:\Documents),
-> dash through the laser, sniff (Shift / LT) at the end of C:\Trash to see the
-> fake wall, clear the 45-second room, then enter the same door again.
+> dash through the laser, sniff (Shift / LT) next to the wall at the end of C:\Trash to
+> open it, clear the 45-second room (keep moving), then enter the same door
+> again. In the boss's second half, hold sniff while shooting.
