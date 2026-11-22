@@ -48,6 +48,13 @@ func _draw_window() -> void:
 	var ink := Art.WHITE if page == Page.ENDING else Art.MID
 	for i in lines.size():
 		Art.text_centered(_frame, 192, top + i * Art.LINE_H, lines[i], ink)
+	if page == Page.ENDING:
+		Art.text_centered(_frame, 192, 49, ending_summary(), Art.ACCENT)
+
+
+func ending_summary() -> String:
+	var stats := Game.stats
+	return Options.t("ending_stats") % [RunStats.clock(stats.finish_time()), stats.deaths, Game.secret_count(), Rooms.secret_total()]
 
 
 func _input(event: InputEvent) -> void:
@@ -102,7 +109,7 @@ func _show_main() -> void:
 	_set_page(Page.MAIN, 92)
 	menu.show_options([
 		[Options.t("menu_continue"), close],
-		[Options.t("menu_restore"), Game.respawn],
+		[Options.t("menu_restore"), Game.give_up],
 		[Options.t("menu_options"), _show_game_options],
 		[Options.t("menu_title"), Game.to_title],
 		[Options.t("menu_quit_game"), Game.quit],

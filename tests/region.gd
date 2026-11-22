@@ -89,6 +89,7 @@ func _run() -> void:
 	await _hazard()
 	await _quarantine()
 	await _clue_and_door()
+	await _door_checkpoint()
 	await _spam()
 	await _backups()
 	await _exits()
@@ -222,6 +223,28 @@ func _clue_and_door() -> void:
 	_check("uma pista nao abre a porta", current_scene == s and "3" in s.toast.text, s.toast.text)
 	G.taken["arena_desktop"] = true
 	_check("save de antes das pistas continua passando", s.door_unlocked())
+
+
+## O caminho normal chega à porta vindo de Drivers, sem pisar no R da Lixeira.
+func _door_checkpoint() -> void:
+	for stage in ["arena", "chefe"]:
+		G.new_game()
+		G.abilities.dash = true
+		for id in ["gallery", "installers", "drivers"]:
+			G.taken["clue:" + id] = true
+		if stage == "chefe":
+			G.taken["arena_desktop"] = true
+		G.restore = {"room": "drivers", "pos": Vector2(40, 472)}
+		G.save_path = PATH
+		var s = await _room("trash", Vector2(680, 168))
+		s.player.global_position = s.door_pos
+		await _frames(10)
+		var saved: Dictionary = load("res://scripts/save_file.gd").read(PATH)
+		G.respawn()
+		await _frames(8)
+		_check("morrer (%s) volta a Lixeira, nao a Drivers" % stage, G.room == "trash", G.room)
+		_check("e fechar o jogo ali tambem (%s)" % stage, saved.get("restore") == "trash", str(saved.get("restore")))
+		G.save_path = ""
 
 
 func _spam() -> void:

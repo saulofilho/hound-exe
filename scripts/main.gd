@@ -253,6 +253,13 @@ func _facing_inward(x: float, speed: float) -> int:
 	return -1 if speed < 0.0 else 1
 
 
+## Quem passa pela porta renasce na Lixeira: pelo caminho normal o último
+## ponto de restauração seria o pé de Drivers, uma ala inteira atrás.
+func _checkpoint_at_door() -> void:
+	Game.restore = {"room": Game.room, "pos": restore_pos}
+	Game.save_game()
+
+
 ## As três pistas, ou um save de antes de elas existirem, que já passou daqui.
 func door_unlocked() -> bool:
 	return Game.clue_count() >= Rooms.CLUES or Game.taken.has("arena_desktop")
@@ -347,16 +354,8 @@ func _update_backup(pp: Vector2) -> void:
 		player.sniff_energy = Game.max_sniff()
 		Game.sniff = player.sniff_energy
 		Sound.play("secret")
-		show_toast(Options.t("secret_got") % [Game.secret_count(), secret_total()], 3.0)
+		show_toast(Options.t("secret_got") % [Game.secret_count(), Rooms.secret_total()], 3.0)
 		Game.save_game()
-
-
-static func secret_total() -> int:
-	var n := 0
-	for id in Rooms.DATA:
-		for row in Rooms.DATA[id].map:
-			n += row.count("S")
-	return n
 
 
 func _update_hazards(pp: Vector2) -> void:
@@ -577,6 +576,7 @@ func stage_process(_delta: float) -> void:
 			_leaving = true
 			Game.hp = player.hp
 			set_sniffing(false)
+			_checkpoint_at_door()
 			Game.boss_return = {"room": Game.room, "pos": door_pos - Vector2(24, 0)}
 			Sound.play("door")
 			Game.enter("ghost")
@@ -585,6 +585,7 @@ func stage_process(_delta: float) -> void:
 			_leaving = true
 			Game.hp = player.hp
 			set_sniffing(false)
+			_checkpoint_at_door()
 			Sound.play("door")
 			Game.enter_arena(Game.room, door_pos - Vector2(24, 0))
 			return

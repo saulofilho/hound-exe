@@ -219,6 +219,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	main.hitstop(0.06)
 	Sound.play("death" if hp <= 0 else "hurt")
 	if hp <= 0:
+		Game.died()
 		main.set_sniffing(false)  # a física do cão para aqui: ninguém mais desligaria o faro
 		main.show_banner(Options.t("death_side"), Color("1c2fa8"))
 		set_physics_process(false)

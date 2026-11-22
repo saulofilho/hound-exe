@@ -369,3 +369,11 @@ static func restore_point(id: String) -> Vector2:
 		if x >= 0:
 			return Vector2(x * 16 + 8, y * 16 + 8)
 	return Vector2.ZERO
+
+
+static func secret_total() -> int:
+	var n := 0
+	for id in DATA:
+		for row in DATA[id].map:
+			n += row.count("S")
+	return n

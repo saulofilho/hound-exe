@@ -227,6 +227,8 @@ morrem por culpa do jogo ou delas.
 - **Não há atalho:** nenhuma ala se completa sem a habilidade dela e o atalho
   de volta só abre com a quarentena vencida (`tools/check_rooms.py`,
   `tests/region.gd`).
+- **A porta é ponto de volta:** morrer na sala de cima ou no chefe devolve à
+  Lixeira, nunca a uma ala atrás (`tests/region.gd`).
 - **Ninguém fica preso:** de todo chão firme alcançável se sai da sala.
 - **Parado não se vence:** nem na sala de cima, nem no chefe.
 

@@ -1,0 +1,98 @@
+# Testes em Windows e Linux de verdade, e os builds exportados abrindo neles.
+# Não publica nada e não usa segredo.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suites:
+    name: testes (${{ matrix.godot }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            godot: linux
+          - os: windows-2022
+            godot: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.13"
+      - name: Godot 4.7.2
+        shell: bash
+        run: tools/ci_godot.sh ${{ matrix.godot }}
+      - name: Testes
+        shell: bash
+        run: python tools/run_tests.py
+
+  export:
+    name: exporta e abre no Linux
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.13"
+      - name: Godot e modelos de exportação
+        run: |
+          tools/ci_godot.sh linux
+          tools/ci_godot.sh templates
+      - name: Exporta
+        run: |
+          mkdir -p builds/linux builds/windows
+          touch builds/.gdignore
+          "$GODOT" --headless --path . --import
+          "$GODOT" --headless --path . --export-release Linux builds/linux/HoundExe.x86_64
+          "$GODOT" --headless --path . --export-release Windows builds/windows/HoundExe.exe
+          chmod +x builds/linux/HoundExe.x86_64
+      - name: Tela virtual
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -qy --no-install-recommends xvfb xauth libgl1 libgl1-mesa-dri libxcursor1 libxinerama1 libxrandr2 libxi6 libxkbcommon0
+      - name: O build abre e desenha
+        run: xvfb-run -a -s "-screen 0 1280x800x24" python tools/run_tests.py --boot builds/linux/HoundExe.x86_64 --render
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows
+          path: builds/windows/
+          retention-days: 1
+          if-no-files-found: error
+
+  windows-boot:
+    name: o build abre no Windows
+    needs: export
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: windows
+          path: builds/windows
+      - name: O build abre (sem GPU, então sem desenhar)
+        run: python tools/run_tests.py --boot builds/windows/HoundExe.exe

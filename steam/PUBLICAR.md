@@ -8,7 +8,7 @@ confira os links no fim antes de cada envio.
 | Objetivo | Situação |
 |---|---|
 | Página "Em breve" | **Material pronto.** Dependem de você: conta, taxa, nome, contato de suporte e respostas do questionário |
-| Demo (Windows e Linux) | **Builds prontos, ainda não envie:** o bot leva 5 min 30 s pela região inteira, e a duração para quem joga pela primeira vez (meta: 15 a 20) ainda não foi medida com pessoas. Os builds nunca foram abertos nesses sistemas |
+| Demo (Windows e Linux) | **Builds prontos, ainda não envie:** o bot leva 5 min 30 s pela região inteira, e a duração para quem joga pela primeira vez (meta: 15 a 20) ainda não foi medida com pessoas (roteiro em docs/PLAYTEST.md). Os builds nunca foram abertos nesses sistemas: o CI faz isso no primeiro push |
 | Demo (macOS) | **Bloqueada:** falta notarizar (conta Apple Developer, paga à parte) |
 | Jogo completo, pago | **Não está pronto.** Existe 1 das 5 regiões do GDD. A análise compara o build com a página e recusa jogo incompleto vendido como completo |
 
@@ -131,7 +131,8 @@ Marque as capturas e o trailer como gameplay e para todas as idades.
 
 - **Geral:** violência fantasiosa leve (um cão atira em arquivos e ícones de
   computador). Sem sangue, sexo, drogas, apostas, linguagem imprópria, compras,
-  interação on-line ou coleta de dados.
+  interação on-line ou coleta de dados (tempo e mortes ficam só no save
+  local, que o Cloud sincroniza se estiver ligado).
 - **Conteúdo adulto:** nenhum.
 - **IA pré-gerada: sim.** A Steam exige declarar conteúdo feito com IA que
   chega ao jogador (arte, som, texto, tradução) e mostra a resposta na página.
@@ -168,7 +169,9 @@ O pedido de análise de compatibilidade só abre depois da análise do build.
 
 - [ ] Subir a versão em `project.godot` e `export_presets.cfg`.
 - [ ] Conferir o roteiro do analista em LOJA.md jogando por ele.
-- [ ] Rodar os testes (lista no README) e `tools/build.sh`.
+- [ ] Rodar `python3 tools/run_tests.py` e `tools/build.sh`.
+- [ ] Conferir o CI verde no commit que vai ser enviado.
+- [ ] Fazer o playtest de [docs/PLAYTEST.md](../docs/PLAYTEST.md).
 - [ ] Abrir num Windows limpo, sem Godot e sem Visual C++.
 - [ ] Abrir num Linux ou Steam Deck.
 - [ ] Jogar do começo ao fim com controle físico e sair pelo menu.

@@ -1,0 +1,53 @@
+HOUND.EXE - TESTE / PLAYTEST
+============================
+
+PORTUGUÊS
+
+1. Reserve uma meia hora. Jogue sem procurar dicas. Pode parar quando quiser:
+   desistir também é um resultado útil.
+2. Descompacte e abra:
+   - Windows: HoundExe.exe. Se o SmartScreen avisar (o teste não é assinado),
+     "Mais informações" > "Executar assim mesmo".
+   - Linux / Steam Deck (modo desktop): HoundExe.x86_64.
+   - macOS: HoundExe.app. Se for bloqueado (o teste não é notarizado), Ajustes >
+     Privacidade e Segurança > "Abrir Mesmo Assim".
+   Só abra se você recebeu o arquivo direto de quem fez o jogo.
+3. Se puder, use um controle.
+4. No fim, ou quando desistir, saia pelo menu SAIR e mande:
+   - o arquivo save.json desta pasta:
+       Windows: %APPDATA%\HoundExe\
+       Linux:   ~/.local/share/HoundExe/
+       macOS:   ~/Library/Application Support/HoundExe/
+   - três respostas: onde você travou? onde achou injusto? jogaria mais?
+
+Não escolha NOVO JOGO depois de terminar: isso zera a contagem.
+
+O save.json guarda progresso, tempo e mortes por sala, versão do jogo, tipo de
+sistema, se usou controle e se houve lentidão. Não guarda nome, conta nem
+endereço, e o jogo não envia nada: só vai o que você mandar.
+
+
+ENGLISH
+
+1. Set aside half an hour. Play without looking for hints. Stop whenever you
+   like: giving up is a useful result too.
+2. Unpack and open:
+   - Windows: HoundExe.exe. If SmartScreen warns (test builds are unsigned),
+     "More info" > "Run anyway".
+   - Linux / Steam Deck (desktop mode): HoundExe.x86_64.
+   - macOS: HoundExe.app. If blocked (test builds are not notarized), Settings >
+     Privacy & Security > "Open Anyway".
+   Only open it if you got the file directly from the developer.
+3. Use a gamepad if you can.
+4. At the end, or when you give up, leave with QUIT and send:
+   - the save.json file from this folder:
+       Windows: %APPDATA%\HoundExe\
+       Linux:   ~/.local/share/HoundExe/
+       macOS:   ~/Library/Application Support/HoundExe/
+   - three answers: where did you get stuck? what felt unfair? would you play more?
+
+Do not pick NEW GAME after finishing: it resets the counters.
+
+save.json holds progress, time and deaths per room, game version, type of
+system, whether a gamepad was used and whether the game ran slow. It holds no
+name, account or address, and the game sends nothing: only what you send.

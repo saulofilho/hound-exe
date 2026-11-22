@@ -3,8 +3,9 @@ extends SceneTree
 ## sem mexer em vida, habilidade, pista ou porta. Mede quanto dura para quem já
 ## sabe o caminho. O caminho vem de tests/planner.py (precisa de python3).
 ##
-## Os bugs soltos das salas são removidos (aqui se prova o percurso); quarentenas,
-## sala de cima e chefe são lutados de verdade. Morrer é permitido e contado.
+## Tudo está vivo: bugs soltos, quarentenas, sala de cima e chefe. O bot não caça
+## os bugs soltos, passa por eles e apanha. Morrer é permitido e contado.
+## `-- N` joga a variação N: outra semente e outra fase de bugs e plataformas.
 ## Rodar: godot --headless --fixed-fps 60 --path . -s tests/campaign.gd
 
 const ACTIONS := ["left", "right", "up", "down", "jump", "dash", "shoot", "sniff", "restart", "aim_left", "aim_right", "aim_up", "aim_down"]
@@ -20,7 +21,6 @@ var ticks := 0
 var deaths := 0
 var falls := 0
 var fighting := 0
-var _known := {}
 
 
 func _initialize() -> void:
@@ -62,18 +62,6 @@ func _settle() -> void:
 		var s := _stage()
 		if s != null and is_instance_valid(s.player) and (s.player.hp <= 0 or (s.player.is_on_floor() and s.player.velocity.length() < 16.0 and Engine.time_scale > 0.9)):
 			return
-
-
-func _clear_roaming() -> void:
-	var s := _stage()
-	if s == null or s.boss != null or _known.has(s.get_instance_id()):
-		return
-	_known[s.get_instance_id()] = true
-	if s.quarantine != null and s.quarantine.locked():
-		return
-	for e in get_nodes_in_group("enemy"):
-		e.queue_free()
-	await _wait(2)
 
 
 ## O que o faro precisa renovar antes do próximo passo.
@@ -131,7 +119,10 @@ func _timing(steps: Array, i: int, t: int, depth := 0) -> int:
 func _plan(job: Dictionary) -> Array:
 	var out := []
 	var script := ProjectSettings.globalize_path("res://tests/planner.py")
-	if OS.execute("python3", [script, Marshalls.utf8_to_base64(JSON.stringify(job))], out, true) != 0:
+	var python := OS.get_environment("PYTHON")
+	if python == "":
+		python = "python" if OS.get_name() == "Windows" else "python3"
+	if OS.execute(python, [script, Marshalls.utf8_to_base64(JSON.stringify(job))], out, true) != 0:
 		print(out[0])
 		return []
 	var parsed: Variant = JSON.parse_string(out[0])
@@ -165,7 +156,6 @@ func _revive() -> void:
 ## Devolve "ok", "morreu" ou por que desistiu.
 func _go(goal: Dictionary) -> String:
 	var room: String = G.room
-	await _clear_roaming()
 	for attempt in 14:
 		await _settle()
 		var s := _stage()
@@ -213,7 +203,6 @@ func _go(goal: Dictionary) -> String:
 					await _tick()
 					if _stage() != null and _stage() != s:
 						break
-				await _clear_roaming()
 				return "ok" if _arrived(goal, room) else "caiu em " + G.room
 			if s.player.hp < hp:
 				falls += 1
@@ -407,7 +396,6 @@ func _enter_folder(to: String) -> String:
 		await _wait(3)
 		Input.action_release("down")
 		await _wait(10)
-		await _clear_roaming()
 		return "ok" if G.room == to else "a pasta nao abriu"
 	return "sem pasta para " + to
 
@@ -558,11 +546,12 @@ func _to_door(scene: String) -> bool:
 func _run() -> void:
 	await physics_frame
 	var args := OS.get_cmdline_user_args()
-	seed(int(args[0]) if not args.is_empty() and args[0].is_valid_int() else 3)
+	var variant := int(args[0]) if not args.is_empty() and args[0].is_valid_int() else 0
+	seed(variant + 3)
 	G.new_game()
 	O.show_ending = true
 	change_scene_to_file("res://main.tscn")
-	await _wait(6)
+	await _wait(6 + variant * 37)  # desloca o relógio de tudo que se mexe
 	var route := [
 		["c_drive", ["R", "S", ">docs"]],
 		["docs", ["S", "/images"]],
@@ -584,7 +573,7 @@ func _run() -> void:
 		if not good:
 			break
 	if good:
-		_check("tres pistas e todos os segredos", G.clue_count() == 3 and G.secret_count() == _stage().secret_total(), "%d, %d" % [G.clue_count(), G.secret_count()])
+		_check("tres pistas e todos os segredos", G.clue_count() == 3 and G.secret_count() == load("res://scripts/rooms.gd").secret_total(), "%d, %d" % [G.clue_count(), G.secret_count()])
 		var won := false
 		for i in 5:
 			if await _to_door("arena") and await _arena():

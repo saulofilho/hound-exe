@@ -166,6 +166,7 @@ const DATA := {
 		"Saving is off:\nroom opened without the title screen.",
 	],
 
+	"ending_stats": ["Tempo %s · mortes %d · segredos %d/%d", "Time %s · deaths %d · secrets %d/%d"],
 	"ending_heading": ["Área de trabalho limpa", "Desktop clean"],
 	"ending_text": [
 		"Você excluiu o Arquivo Fantasma.\nEste é o fim desta versão. Obrigado por jogar!",

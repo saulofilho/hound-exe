@@ -61,5 +61,7 @@ done
 tar -C "$OUT/linux" -czf "$OUT/testers/HoundExe-$VERSION-linux.tar.gz" .
 ditto -c -k --norsrc "$OUT/macos" "$OUT/testers/HoundExe-$VERSION-macos.zip"
 
+cp tools/LEIA-ME-TESTE.txt "$OUT/testers/"
+
 echo "== pronto ($VERSION)"
 du -sh "$OUT/windows" "$OUT/linux" "$OUT/macos" "$OUT"/testers/*

@@ -126,7 +126,7 @@ func show_banner(text: String, color: Color) -> void:
 
 func _process(delta: float) -> void:
 	if _wants_restart(delta):
-		Game.respawn()  # volta ao último ponto de restauração
+		Game.give_up()  # volta ao último ponto de restauração
 		set_process(false)
 		return
 	stage_process(delta)

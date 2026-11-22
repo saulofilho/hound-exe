@@ -97,6 +97,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	stage.hitstop(0.06)
 	Sound.play("death" if hp <= 0 else "hurt")
 	if hp <= 0:
+		Game.died()
 		stage.show_banner(Options.t("death_top"), Color("1c2fa8"))
 		set_physics_process(false)
 		visible = false

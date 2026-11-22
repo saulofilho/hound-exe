@@ -26,7 +26,7 @@ machine, folder by folder, until it reaches the kernel. Working title.
 Feel references: *Gato Roboto*, *Not a Hero*, *Serious Sam: Bogus Detour* and
 *Minit*. Character, map and art are our own.
 
-## The demo: the Desktop region (0.2.0)
+## The demo: the Desktop region (0.2.1)
 
 Eleven rooms and three wings. The door at the end of the Trash asks for **three
 buried clues**; nothing shows them but sniffing, and each wing ends in one.
@@ -44,9 +44,12 @@ buried clues**; nothing shows them but sniffing, and each wing ends in one.
 - **Bad sectors** cost 1 health and put the hound back on firm ground.
 - **Secret backups**, one per exploration room (10), each make sniffing last longer.
 - **Controls can be remapped** for keyboard and gamepad in OPTIONS > CONTROLS.
+- **The door is a checkpoint:** dying in the top-down room or at the boss
+  wakes you in the Trash, not at the foot of Drivers.
+- **The ending shows your time**, deaths and secrets.
 
-A bot that knows the route finishes, collecting every secret, in about 5 and a
-half minutes. How long a first playthrough takes (the goal is 15 to 20) has not
+A bot that knows the route finishes, collecting every secret with every bug
+alive, in about 5 and a half minutes. How long a first playthrough takes (the goal is 15 to 20) has not
 been measured with people yet.
 
 | Hidden files | Temporary platforms |
@@ -173,6 +176,7 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] An ending for the demo
 - [x] Windows, Linux and macOS export; SteamPipe scripts
 - [x] Store art, screenshots, gameplay trailer and store text
+- [ ] First green CI run on Windows and Linux (`.github/workflows/tests.yml`)
 - [ ] Run on real Windows, Linux, Steam Deck and a physical gamepad
 - [ ] macOS notarization
 - [ ] Steamworks account, store page review, demo review
@@ -214,9 +218,18 @@ be remapped in OPTIONS > CONTROLS.
 
 ### Tests and tools
 
+`python3 tools/run_tests.py` runs everything below in a throwaway user folder
+(about 6 minutes). The same command runs on Windows and Linux in GitHub
+Actions, which also exports both builds and checks that they open on them.
+Pass suite names to run only those: `python3 tools/run_tests.py save steam`.
+
 ```bash
+# playtest counters: clock, deaths, restarts, old and broken saves (real time)
+godot --headless --path . -s tests/stats.gd
+
 # the whole game from NEW GAME to the ending, inputs only: every clue and
-# secret, real quarantines, arena and boss (roaming bugs removed; needs python3)
+# secret, every bug alive, real quarantines, arena and boss (needs python3;
+# `-- 16` plays another variation)
 godot --headless --fixed-fps 60 --path . -s tests/campaign.gd
 
 # proof over the maps: paths exist, shortcuts don't, no room traps the hound
@@ -277,6 +290,20 @@ health.
 when the main file is missing or unreadable. Only the title screen turns saving
 on: opening `main.tscn` directly (F6 in the editor), tests and tools never
 write to your save.
+
+## Playtests
+
+`save.json` also counts play time, deaths and restarts per room, when each
+milestone happened and whether frames dropped below 30 fps. It holds nothing
+that identifies the player and the game never sends it. Testers send the file
+by hand (`builds/testers/LEIA-ME-TESTE.txt`, in both languages) and
+
+```bash
+python3 tools/playtest_report.py saves/
+```
+
+turns those files into the numbers. The procedure is in
+[docs/PLAYTEST.md](docs/PLAYTEST.md) (Portuguese).
 
 ## Sound
 
@@ -350,6 +377,7 @@ scripts/
 ├── special_block.gd hidden and temporary platforms
 ├── quarantine.gd locking fight with waves
 ├── spam.gd       flying bug that dives
+├── run_stats.gd  per-run time and death counters kept in the save
 ├── texts.gd      every visible string, in Portuguese and English
 ├── rooms.gd      the Desktop region's rooms as ASCII maps, and how they link
 ├── stage.gd      shared base: controls, screen shake, hitstop, HUD, toasts
@@ -370,6 +398,9 @@ tools/make_art.py sprites and font, drawn as text
 tools/build.sh    exports every platform
 steam/            store assets, texts and publishing guide
 tools/make_audio.py  synthesizer and scores
+tools/run_tests.py every test, in a throwaway user folder
+tools/playtest_report.py turns testers' saves into numbers
+.github/workflows tests and boot checks on Windows and Linux
 tools/check_rooms.py reachability proof over the maps
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images

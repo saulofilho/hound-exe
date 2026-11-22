@@ -8,7 +8,7 @@ Metroidvania de ação em pixel art 1-bit com o cão do
 - Design: [docs/GDD.md](docs/GDD.md)
 - Moodboard: [docs/moodboard.html](docs/moodboard.html)
 
-## A demo: região Área de trabalho (0.2.0)
+## A demo: região Área de trabalho (0.2.1)
 
 Onze salas em três alas. A porta no fim da Lixeira exige **três pistas
 enterradas**, que só o faro mostra, e cada ala termina em uma.
@@ -26,9 +26,12 @@ enterradas**, que só o faro mostra, e cada ala termina em uma.
 - **Setor ruim** tira 1 de vida e devolve o cão ao chão firme.
 - **Backups secretos**, um por sala de exploração (10), deixam o faro mais longo.
 - **Controles remapeáveis**, teclado e gamepad, em OPÇÕES > CONTROLES.
+- **A porta é um ponto de volta:** morrer na sala de cima ou no chefe devolve
+  à Lixeira, não ao pé de Drivers.
+- **A tela de fim mostra o tempo**, as mortes e os segredos.
 
-Um bot que conhece o caminho termina, com todos os segredos, em cerca de 5
-minutos e meio. A duração para quem joga pela primeira vez (meta: 15 a 20)
+Um bot que conhece o caminho termina, com todos os segredos e todos os bugs
+vivos, em cerca de 5 minutos e meio. A duração para quem joga pela primeira vez (meta: 15 a 20)
 ainda não foi medida com pessoas.
 
 | Arquivos ocultos | Plataformas temporárias |
@@ -78,7 +81,18 @@ Depois de clonar, importe uma vez antes de rodar:
 | Pausar | Esc | Start |
 | Voltar ao ponto de restauração | segurar R (um toque na tela azul) | menu de pausa |
 
+### Playtest
+
+O save conta tempo, mortes e desistências por sala. Não identifica ninguém e o
+jogo não envia nada: o testador manda o `save.json` e
+`python3 tools/playtest_report.py saves/` faz a conta. O passo a passo está em
+[docs/PLAYTEST.md](docs/PLAYTEST.md).
+
 ### Testes
+
+`python3 tools/run_tests.py` roda todos (uns 6 minutos) numa pasta de usuário
+descartável. O GitHub Actions roda o mesmo em Windows e Linux e confere que os
+builds abrem neles.
 
 Depois de mexer nas salas:
 
@@ -89,7 +103,7 @@ godot --headless --fixed-fps 60 --path . -s tests/campaign.gd
 
 O primeiro prova, nos mapas, que o caminho existe, que o atalho não existe e
 que nenhuma sala prende o cão. O segundo joga do jogo novo até o fim só com os
-controles (sem os bugs soltos; com quarentenas, sala de cima e chefe). A lista
+controles (com todos os bugs, quarentenas, sala de cima e chefe). A lista
 completa de testes está no [README em inglês](README.md#tests-and-tools).
 
 ### Estrutura

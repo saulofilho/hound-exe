@@ -1,0 +1,6 @@
+# o Windows faz checkout igual ao resto: os mapas e textos são lidos linha a linha
+* text=auto eol=lf
+*.png binary
+*.wav binary
+*.ico binary
+*.pdf binary
