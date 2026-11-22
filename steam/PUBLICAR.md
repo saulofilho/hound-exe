@@ -7,7 +7,7 @@ confira os links no fim antes de cada envio.
 
 | Objetivo | Situação |
 |---|---|
-| Página "Em breve" | **Material pronto.** Dependem de você: conta, taxa, nome, contato de suporte e respostas do questionário |
+| Página "Em breve" | **Material e pacote prontos** ([ENVIO.md](ENVIO.md)). Dependem de você: conta, taxa, conferência do nome com advogado, contato de suporte e respostas do questionário |
 | Demo (Windows e Linux) | **Builds prontos, ainda não envie:** o bot leva 5 min 30 s pela região inteira, e a duração para quem joga pela primeira vez (meta: 15 a 20) ainda não foi medida com pessoas (roteiro em docs/PLAYTEST.md). O CI passou em Windows e Linux (8f162a3) e os builds abrem neles; nunca foram jogados num computador real com esses sistemas |
 | Demo (macOS) | **Bloqueada:** falta notarizar (conta Apple Developer, paga à parte) |
 | Jogo completo, pago | **Não está pronto.** Existe 1 das 5 regiões do GDD. A análise compara o build com a página e recusa jogo incompleto vendido como completo |
@@ -17,14 +17,11 @@ produção das regiões 2 a 5. O lançamento vem depois.
 
 ## TODO antes de enviar
 
-**Adiado por decisão (22/11/2026), fazer antes da página:**
+- [x] **Trailer com bitrate alto:** 19.734 kbps. `tools/make_trailer.sh` força
+      a taxa e confere o arquivo (`tools/check_video.swift`).
 
-- [ ] **Trailer com bitrate alto.** Saiu com 1.452 kbps; a Steam pede
-      [5.000 ou mais](https://partner.steamgames.com/doc/store/trailer) e o
-      preset dela usa 20 Mbps. `tools/encode_trailer.swift` pede 12 Mbps como
-      média e o codificador não chega lá com pixel art: forçar a taxa e
-      **conferir o arquivo**. Depois, regerar o vídeo de divulgação e rodar
-      `tools/make_site.py` para o site pegar o novo.
+**O roteiro de envio, tela por tela, é [ENVIO.md](ENVIO.md)**, com o pacote de
+`python3 tools/steam_kit.py`.
 
 **Depois:**
 
@@ -32,14 +29,15 @@ produção das regiões 2 a 5. O lançamento vem depois.
       Privado, o GitHub Pages para no plano gratuito, então o site (`index.html`,
       `404.html`, `site/`) teria de ir para um repositório público só dele.
 - [ ] Com a página no ar: trocar "Planned for Steam" no site pelo botão de
-      wishlist e tirar "working title".
+      wishlist.
 - [ ] Opcional: wishlist na tela de fim da demo (precisa do App ID e do SDK).
 
 ## 1. Só você pode fazer
 
-- [ ] **Confirmar o nome.** O GDD ainda o chama de provisório. Procure
-      "Hound.exe" na loja da Steam e nas bases de marcas (INPI, USPTO, EUIPO).
-      Não fiz essa busca. Trocar depois refaz artes, textos e trailer.
+- [x] **Nome: Hound.exe** (decidido em 22/11/2026; triagem em [NOME.md](NOME.md)).
+- [ ] **Advogado de marcas, antes da análise da página:** risco médio por causa
+      de "HOUND". Depois da análise, a Steam
+      [não deixa trocar sem pedir](https://partner.steamgames.com/doc/store/editing/name).
 - [ ] **Entrar no Steam Direct** e assinar os contratos. O nome legal precisa
       ser o mesmo do titular da conta bancária.
 - [ ] **Pagar US$ 100 por jogo.** Não é reembolsável; volta após US$ 1.000 de
@@ -139,6 +137,7 @@ exige o SDK da Steam.
 
 | Item | Onde |
 |---|---|
+| Tudo, com o nome de cada campo | `builds/steam-envio/` (`tools/steam_kit.py`) |
 | Cápsulas, Library, fundo e ícones | `steam/assets/` (`tools/make_store_art.py`) |
 | 8 capturas 1920x1080, em inglês | `steam/screenshots/` (`godot --path . -s tools/capture.gd -- store`) |
 | Trailer de gameplay, 38 s | `builds/trailer/` (`tools/make_trailer.sh`) |

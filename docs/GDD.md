@@ -1,6 +1,6 @@
 # Hound.exe · documento de design (GDD)
 
-> Nome provisório. Versão 0.2 · 20/11/2026 · fase de planejamento, nada de código ainda.
+> Nome: Hound.exe (definido em 22/11/2026, ver [steam/NOME.md](../steam/NOME.md)). Versão 0.2 · 20/11/2026 · fase de planejamento, nada de código ainda.
 > Moodboard: [moodboard.html](moodboard.html)
 
 ## 1. Em uma frase
@@ -20,8 +20,9 @@ em pasta, até chegar ao kernel.
 | Engine | Godot 4, exportando para Windows, macOS e Linux | — |
 | Plataforma | Steam, com meta de Steam Deck verificado | — |
 
-**Ainda em aberto:** tempo disponível e quem faz arte e música; nome próprio ou
-ligado ao scopehound; quanto de história o jogo terá.
+**Decidido depois:** o nome é próprio, Hound.exe, com o cão do scopehound.
+
+**Ainda em aberto:** tempo disponível e quem faz arte e música; quanto de história o jogo terá.
 
 As referências são de ritmo e sensação. Personagem, mapa, armas e visual são
 nossos; nada é copiado desses jogos.
@@ -237,6 +238,6 @@ morrem por culpa do jogo ou delas.
 ## 14. Perguntas em aberto
 
 1. O tempo disponível e quem faz arte e música.
-2. Se o nome é próprio ou ligado ao scopehound.
+2. ~~Se o nome é próprio ou ligado ao scopehound.~~ Próprio: Hound.exe (22/11/2026).
 3. A história: por que o computador está infectado, e de quem ele é?
 4. Se haverá modo cooperativo (um segundo cão), que é um risco de escopo.

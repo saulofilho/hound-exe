@@ -49,9 +49,12 @@ Algo está corrompendo o computador, e o cão é o processo enviado para caçar 
 
 ## Tags sugeridas
 
-Metroidvania, Action, Pixel Graphics, 1-bit, 2D, Platformer, Top-Down Shooter,
-Twin Stick Shooter, Retro, Dog, Cute, Boss Fights, Exploration, Controller,
-Singleplayer, Indie
+Em ordem de peso, todas conferidas na lista oficial em 22/11/2026 (não existem
+"1-bit", "Dog" nem "Boss Fights"):
+
+Metroidvania, Pixel Graphics, 2D Platformer, Action-Adventure, Twin Stick Shooter,
+Side Scroller, Exploration, Dogs, Retro, Minimalist, Top-Down Shooter,
+Shoot 'Em Up, Old School, 1990's, Cute, Action, Controller, 2D, Singleplayer, Indie
 
 ## Notas para o analista (build)
 

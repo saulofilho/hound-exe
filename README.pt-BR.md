@@ -3,7 +3,7 @@
 [English](README.md) · **Português**
 
 Metroidvania de ação em pixel art 1-bit com o cão do
-[scopehound](https://github.com/saulofilho/scopehound). Nome provisório.
+[scopehound](https://github.com/saulofilho/scopehound).
 
 - Design: [docs/GDD.md](docs/GDD.md)
 - Moodboard: [docs/moodboard.html](docs/moodboard.html)
@@ -90,7 +90,11 @@ ou vídeo de divulgação, rode `python3 tools/make_site.py`.
 
 ### Pendências da Steam
 
-- [ ] **Adiado:** regerar o trailer com 5.000 kbps ou mais (hoje tem 1.452).
+- [x] Trailer regerado para a Steam (19.734 kbps).
+- [x] Pacote de envio (`python3 tools/steam_kit.py`) e [passo a passo](steam/ENVIO.md).
+- [x] Nome definido: Hound.exe ([triagem](steam/NOME.md)).
+- [ ] Advogado de marcas, antes da análise da página travar o nome.
+- [ ] Seguir o passo a passo: cadastro, página e, depois do playtest, demo.
 - [ ] Decidir se o repositório fica público antes de vender.
 - [ ] Pôr o botão de wishlist no site quando a página existir.
 

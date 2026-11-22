@@ -5,7 +5,7 @@
 A 1-bit action metroidvania starring the hound from
 [scopehound](https://github.com/saulofilho/scopehound). The hound breaks into
 an infected computer, hunts bugs with a blaster and sniffs through the whole
-machine, folder by folder, until it reaches the kernel. Working title.
+machine, folder by folder, until it reaches the kernel.
 
 ![Concept art: the hound shoots a bug on platforms made of windows](docs/img/moodboard-hero.png)
 
@@ -177,12 +177,15 @@ design in [docs/GDD.md](docs/GDD.md) (Portuguese).
 - [x] Windows, Linux and macOS export; SteamPipe scripts
 - [x] Store art, screenshots, gameplay trailer and store text
 - [x] English website for GitHub Pages
-- [ ] **TODO (deferred):** re-encode the trailer at 5,000+ kbps as Steam asks (it is 1,452 today)
+- [x] Trailer re-encoded for Steam (19,734 kbps, checked by the script)
+- [x] Submission kit and screen-by-screen guide ([steam/ENVIO.md](steam/ENVIO.md), Portuguese)
 - [ ] Decide whether the repository stays public before selling
 - [ ] Swap the website's "Planned for Steam" for a wishlist button once the page is live
 - [x] First green CI run on Windows and Linux (`.github/workflows/tests.yml`)
 - [ ] Run on real Windows, Linux, Steam Deck and a physical gamepad
 - [ ] macOS notarization
+- [x] Name decided: Hound.exe ([screen](steam/NOME.md), Portuguese)
+- [ ] Trademark lawyer check, before the store page review locks the name
 - [ ] Steamworks account, store page review, demo review
 
 ## Running the prototype
@@ -346,6 +349,7 @@ drawn from the same ASCII maps as the collisions.
 ```bash
 tools/build.sh          # Windows, Linux and macOS into builds/
 tools/make_trailer.sh   # gameplay trailer (macOS only)
+python3 tools/steam_kit.py   # everything to upload to Steamworks, validated (macOS)
 tools/make_promo.sh     # 33 s promo video, 16:9 and 9:16 (macOS only)
 ```
 
@@ -423,6 +427,7 @@ tools/playtest_report.py turns testers' saves into numbers
 .github/workflows tests and boot checks on Windows and Linux
 index.html, site/ the website
 tools/make_site.py generates the website's media
+tools/steam_kit.py the Steamworks submission folder
 tools/check_rooms.py reachability proof over the maps
 tools/capture.gd  screenshot capture
 docs/             GDD, moodboard and images

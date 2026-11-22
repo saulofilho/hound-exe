@@ -2,9 +2,12 @@
 // ampliando 5x sem borrar. Uso: swift tools/encode_trailer.swift <pasta> <saida.mp4>
 // Com um terceiro e um quarto argumento (logo e ícone em PNG) sai vertical,
 // 1080x1920: o quadro inteiro no meio, o nome em cima e o ícone embaixo.
+// CBR_MBPS=20 força taxa constante (a Steam pede 5.000 kbps ou mais, e com taxa
+// média pixel art sai perto de 1.400). Sem ele, o arquivo fica leve para a web.
 import AVFoundation
 import CoreGraphics
 import ImageIO
+import VideoToolbox
 
 let args = CommandLine.arguments
 guard args.count == 3 || args.count == 5 else { print("uso: encode_trailer.swift <pasta> <saida.mp4> [logo.png icone.png, para vertical]"); exit(1) }
@@ -31,9 +34,15 @@ guard !frames.isEmpty, let wav = all.first(where: { $0.pathExtension == "wav" })
 try? FileManager.default.removeItem(at: out)
 
 let writer = try AVAssetWriter(outputURL: out, fileType: .mp4)
+var compression: [String: Any] = [AVVideoAverageBitRateKey: 12_000_000, AVVideoExpectedSourceFrameRateKey: fps]
+if let wanted = ProcessInfo.processInfo.environment["CBR_MBPS"] {
+  guard let mbps = Int(wanted), (1...50).contains(mbps) else { print("CBR_MBPS precisa ser de 1 a 50"); exit(1) }
+  compression.removeValue(forKey: AVVideoAverageBitRateKey)
+  compression[kVTCompressionPropertyKey_ConstantBitRate as String] = mbps * 1_000_000
+}
 let video = AVAssetWriterInput(mediaType: .video, outputSettings: [
   AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: width, AVVideoHeightKey: height,
-  AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: 12_000_000, AVVideoExpectedSourceFrameRateKey: fps],
+  AVVideoCompressionPropertiesKey: compression,
 ])
 let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: video, sourcePixelBufferAttributes: [
   kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32ARGB,
